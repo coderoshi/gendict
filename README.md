@@ -8,10 +8,12 @@
  * `C_INCLUDE_PATH=/usr/local/Cellar/imagemagick/6.7.7-6/include/ImageMagick gem install rmagick`
 5. `gem install bundler && bundler install`
 
-## Grab latest definitions
+## Grab the latest word list and definitions
 
-    curl http://toolserver.org/~enwikt/definitions/enwikt-defs-latest-en.tsv.gz > dumps/enwikt-defs-latest-en.tsv.gz
-    gunzip dumps/enwikt-defs-latest-en.tsv.gz
+    cd dumps
+    curl -O http://toolserver.org/~enwikt/definitions/enwikt-defs-latest-en.tsv.gz
+    curl -O http://dumps.wikimedia.org/enwiktionary/latest/enwiktionary-latest-all-titles-in-ns0.gz
+    gunzip *.gz
 
 ## Run
 
