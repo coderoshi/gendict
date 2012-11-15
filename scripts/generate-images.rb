@@ -113,8 +113,6 @@ def clean_defs(term, defs)
         
         # template parameters
         display = display.gsub(/\|\s*(?:ambi|in|un)?(?:countable|formal|transitive)\s*(?=[\|\}])/, '')
-        #display = display.gsub(/\|_\|/, '|')
-        display = display.gsub(/\|now\|/, '|')
         display = display.gsub(/(?<=[\{\|])(chiefly)\|([^\|\}]+)/, '\1 \2')
         
         # simple predictable templates
@@ -130,7 +128,6 @@ def clean_defs(term, defs)
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
         display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
-        #display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
         display = display.gsub(/^{{senseid\|(?:[^\|]+\|)*([^}]+)}}/, '(\1)')
         
         # identifyable templates
@@ -152,18 +149,6 @@ def clean_defs(term, defs)
         
         # templates which can be removed wholesale
         display = display.gsub(/{{(?:by extension|defn|defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
-        
-        # templates for which only the name matters
-        #display = display.gsub(/{{(aviation|baseball|basketball|biology|\w+boarding)(\|[^\}]*)?}}/, '\1')
-        #display = display.gsub(/{{(derogatory|engineering|euphemistic|geometry|in the plural)(\|[^\}]*)?}}/, '\1')
-        #display = display.gsub(/{{(linguistics|logic|math\w*|nautical|poker)(\|[^\}]*)?}}/, '\1')
-        #display = display.gsub(/{{(proscribed|scientific|surname)(\|[^\}]*)?}}/, '\1')
-        
-        # templates which should be kept in whole
-        #display = display.gsub(/{{((?:algebra|analysis|anthropology|botany|colloquial|copulative|cricket)(?:\|[^\|\}]+)*)}}/, '\1')
-        #display = display.gsub(/{{((?:figuratively|gaming|given name|legal|meteorology)(?:\|[^\|\}]+)*)}}/, '\1')
-        #display = display.gsub(/{{((?:music|personal|physics|rail transport|reflexive)(?:\|[^\|\}]+)*)}}/, '\1')
-        #display = display.gsub(/{{((?:theology|sports|usually)(?:\|[^\|\}]+)*)}}/, '\1')
         
         # any remaining unidentified un-nested templates
         display = display.gsub(/{{([^}]+)}}/) { |match|
@@ -187,14 +172,14 @@ def clean_defs(term, defs)
         }
         
         # known tags
-        display = display.gsub(/<(ref) [^>]+(?:\/>|>.*?<\/\1>)/, '')
+        display = display.gsub(/<ref [^>]+(?:\/>|>.*?<\/ref>)/, '')
         display = display.gsub(/<ref>.*?<\/ref>/, '')
         display = display.gsub(/<ref>.*/, '')
-        display = display.gsub(/<(b|div|i|span|su[bp])(?: [^>]+)?>(.*?)<\/\1>/, '\2')
         display = display.gsub(/<(br)(?: [^>]+)?>/, '')
         display = display.gsub(/<math>(.*?)<\/math>/) { |match| 
           match.gsub(/<math>(.*?)<\/math>/, '\1').gsub(/\\/, '')
         }
+        display = display.gsub(/<([a-z]\w+)(?: [^>]+)?>(.*?)<\/\1>/, '\2')
         
         # html comments
         display = display.gsub(/<!--.*?-->/, '')
