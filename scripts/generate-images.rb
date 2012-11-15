@@ -94,6 +94,7 @@ def clean_defs(term, defs)
       keep = keep && (definition =~ /{{(?:[^}]+\|)?(?:archaic|dated|historical|obsolete|rare)/).nil?
       keep = keep && (definition =~ /{{rf\w-(?:def|redundant|sense)/).nil?
       keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil?
+      keep = keep && (definition =~ /{{fact[\|\}]/).nil?
       
       if keep
         
@@ -105,8 +106,13 @@ def clean_defs(term, defs)
         # fix improperly closed templates
         display = display.gsub(/\{\{[^\}]+\}(?!\})/, '\&}')
         
+        # numbered template arguments
+        display = display.gsub(/\|\s*\d+\s*=\s*/, '|')
+        
         # simple predictable templates
         display = display.gsub(/{{,}}/, ',')
+        display = display.gsub(/{{superl}}/, 'superlative')
+        display = display.gsub(/{{term\|([^\|\}]+)[^\}]*}}/, '(\1)')
         
         # prefix templates
         display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
@@ -121,20 +127,25 @@ def clean_defs(term, defs)
         
         # identifyable templates
         display = display.gsub(/{{([A-Z][^\|\}]+)[^\}]*}}/, '(\1)')
+        display = display.gsub(/{{(\w)}}/, '"\1"')
         display = display.gsub(/{{([^\|\}]+ of)\s*\|([^\}]+)}}/, '\1 "\2"')
         display = display.gsub(/{{context(\|(in|un)?(formal|transitive))*}}\s*/, '')
         display = display.gsub(/{{context(?:\|(?:in|un)?(?:formal|transitive))*\|([^}]+)}}/, '(\1)')
-        display = display.gsub(/{{(?:context|qualifier|sense|term)\|(.*?)}}/, '(\1)')
+        display = display.gsub(/{{(in|un)?(formal|transitive)}}\s*/, '')
+        display = display.gsub(/{{(?:context|qualifier|sense)\|(.*?)}}/, '(\1)')
         display = display.gsub(/{{taxlink\|([^\|\}]+)\|([^\}]+)}}/, '\1 \2')
         display = display.gsub(/{{taxlink\|([^\}]+)}}/, '\1')
         display = display.gsub(/{{l(?:\|[^\|\}]+)*\|([^\}\|]+)}}/, '\1')
         display = display.gsub(/{{(?:defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
         display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
         display = display.gsub(/{{(?:gloss|w)\|(.*?)}}/, '\1')
-        display = display.gsub(/{{(engineering)(\|[^\}])?}}/, '\1')
+        display = display.gsub(/{{(aviation|derogatory|engineering|geometry|in the plural|proscribed)(\|[^\}]*)?}}/, '\1')
+        display = display.gsub(/{{(short for|often|dialect)\s*\|([^\}]+)}}/, '\1 \2')
+        display = display.gsub(/{{soplink\|([^\|\}]+)\|([^\|\}]+)}}/, '\1 \2')
+        display = display.gsub(/{{etyl\|yi\|[^\}]*}}/, 'Yiddish')
         
         # unidentifyable prefix templates
-        display = display.gsub(/^{{([^}]+)}}/, '(\1)')
+        #display = display.gsub(/^{{([^}]+)}}/, '(\1)')
         
         # protect nowiki
         nowiki = []
@@ -144,7 +155,7 @@ def clean_defs(term, defs)
         }
         
         # known tags
-        display = display.gsub(/<ref [^>]+(?:\/>|>.*?<\/ref>)/, '')
+        display = display.gsub(/<(ref|span) [^>]+(?:\/>|>.*?<\/\1>)/, '')
         display = display.gsub(/<ref>.*?<\/ref>/, '')
         display = display.gsub(/<ref>.*/, '')
         display = display.gsub(/<(math|su[bp])>(.*?)<\/\1>/, '\2')
@@ -164,6 +175,7 @@ def clean_defs(term, defs)
         
         # punctuation and spacing
         display = display.gsub(/,(?:\s*,)+/, ',')
+        display = display.gsub(/\)\(/, ') (')
         display = display.gsub(/\|/, ', ')
         display = display.gsub(/\s+/, ' ')
         display = display.gsub(/^\s+|\s+$/, '')
@@ -178,7 +190,7 @@ def clean_defs(term, defs)
         # capitalization
         display = display[0].upcase + display[1..-1]
         
-        if !(display =~ /(?:[<>]|([\[\]\{\}])\1)/).nil?
+        if !(display =~ /(?:<[\w "'=\/]+>|([\[\]\{\}])\1)/).nil?
           buf += "  *****************************************************************\n"
           buf += "  * " + definition + "\n"
           buf += "  * " + display + "\n"
@@ -201,25 +213,22 @@ end
 
 # Read input term from command line
 start = ARGV[0] || ""
-first = !start
+passed_start = !!start
 n = 0
 
 STDIN.each_line do |line|
   term = line.chomp
   n += 1
-  if (term <=> start) >= 0
+  if passed_start or term == start
+    passed_start = true
+  end
+  if passed_start
     definitions = extract_defs(term)
     blob = clean_defs(term, definitions)
+    puts n.to_s + "\t" + term
     if !blob.index('*****').nil?
-      puts "======= " + term + " ======="
       puts blob
       exit 1
-    elsif first
-      first = false
-      puts "======= " + term + " ======="
-      puts blob
-    else
-      puts n.to_s + "\t" + term
     end
   end
 end
