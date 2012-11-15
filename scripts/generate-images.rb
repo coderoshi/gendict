@@ -63,22 +63,6 @@ def image_gen(term, definitions)
   end
 end
 
-# break text up for image generation
-def text_break(str)
-  count=0
-  new_str = ""
-  str.split.each{|word|
-    new_str += word
-    if (count+=word.length+1) >= 20
-      new_str += "\n"
-      count = 0
-    else
-      new_str += " "
-    end
-  }
-  new_str
-end
-
 def clean_defs(term, defs)
   slides = []
   defs.each { |kind, definitions|
@@ -228,8 +212,11 @@ def clean_defs(term, defs)
         script = script.gsub(/^\(([^\)]+)\)\s*/, '\1: ')
         
         kind_slides.push({
+          'term' => term,
+          'kind' => kind,
+          'index' => i,
           'wikitext' => definition,
-          'display' => term + " (" + kind + ")\n" + i.to_s + ". " + display,
+          'display' => i.to_s + ". " + display,
           'script' => "Definition " + i.to_s + ": " + script
         })
         
@@ -243,6 +230,8 @@ def clean_defs(term, defs)
     end
     
     slides.push({
+      'term' => term,
+      'kind' => kind,
       'display' => term + "\n(" + kind + ")",
       'script' => "Part of speech: " + kind + ". " + i.to_s + suffix + "."
     })
@@ -277,6 +266,108 @@ def process_all
   
 end
 
+# break text up for image generation
+def text_break(str, width)
+  new_str = ""
+  count=0
+  str.split.each{|word|
+    if (count + word.length) >= width
+      new_str += "\n" + word
+      count = word.length
+    else
+      if count > 0
+        new_str += " "
+      end
+      new_str += word
+      count += word.length + 1
+    end
+  }
+  new_str
+end
+
+# Generate image
+def image_gen(slide)
+  
+  term = slide['term']
+  kind = slide['kind'] || nil
+  index = slide['index'] || nil
+  body = slide['display'] || nil
+  
+  # f = Image.new(800,500) { self.background_color = "white" }
+  granite = Magick::ImageList.new('granite:')
+  canvas = Magick::ImageList.new
+  canvas.new_image(656, 492, Magick::TextureFill.new(granite))
+
+  # heading
+  heading = term
+  heading_text = Magick::Draw.new
+  heading_text.pointsize = 52
+  if kind
+    if index
+      heading += " (" + kind + ")"
+    else
+      heading += "\n(" + kind + ")"
+    end
+  end
+  if index
+    heading_text.gravity = Magick::NorthWestGravity
+  else
+    heading_text.gravity = Magick::CenterGravity
+  end
+  #formatted_def = text_break(slide['display'])
+  heading_text.annotate(canvas, 0,0,0,0, heading) {
+    self.fill = 'black'
+  }
+  
+  # body
+  if index
+    body_text = Magick::Draw.new
+    body_text.pointsize = 48
+    body_text.gravity = Magick::NorthWestGravity
+    body = text_break(body, 25)
+    
+    if body.count("\n") > 5
+      body = text_break(body, 30)
+      body_text.pointsize = 44
+    end
+    
+    #formatted_def = text_break(slide['display'])
+    body_text.annotate(canvas, 0,0,20,80, body) {
+      self.fill = 'black'
+    }
+  end
+  
+  file_name = "terms/#{term}/#{term}"
+  if kind
+    file_name += "-#{kind}"
+    if index
+      file_name += "-#{index}"
+    end
+  end
+  file_name += ".jpeg"
+  
+  canvas.append(true).write("#{file_name}")
+  slide['image'] = file_name
+  
+end
+
+def audio_gen(slide)
+  term = slide['term']
+  kind = slide['kind'] || nil
+  index = slide['index'] || nil
+  file_name = "terms/#{term}/#{term}"
+  if kind
+    file_name += "-#{kind}"
+    if index
+      file_name += "-#{index}"
+    end
+  end
+  file_name += ".aiff"
+  say = slide['script'].gsub(/[\']/, "'\\\\''")
+  `say '#{say}' -o '#{file_name}'`
+  slide['audio'] = file_name
+end
+
 # Read input term from command line
 term = ARGV[0]
 
@@ -286,6 +377,7 @@ defs = extract_defs(term)
 # create slides
 slides = []
 slides.push({
+  'term' => term,
   'display' => term,
   'script' => term + '.'
 })
@@ -293,6 +385,7 @@ slides.push({
 slides += clean_defs(term, defs)
 
 slides.push({
+  'term' => term,
   'display' => term,
   'script' => term + '.'
 })
@@ -303,9 +396,8 @@ for slide in slides
   puts "\n************************************************************************************"
   puts "** " + slide['display'].gsub(/\n/, "\n** ")
   puts "************************************************************************************"
-  #puts slide['wikitext'] || ''
-  say = slide['script'].gsub(/[\']/, "'\\\\''")
-  `say '#{say}'`
+  image_gen(slide)
+  audio_gen(slide)
 end
 
 ################################################################################
@@ -321,6 +413,7 @@ defs = extract_defs(term)
 
 slides = []
 slides.push({
+  'term' => term,
   'display' => term,
   'script' => term + '.'
 })
@@ -329,6 +422,7 @@ slides.push({
 #{"query":{"pages":{"-1":{"ns":6,"title":"File:en-us-tear-verb.ogg","missing":"","imagerepository":"shared","imageinfo":[{"url":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/b\/b2\/En-us-tear-verb.ogg","descriptionurl":"https:\/\/commons.wikimedia.org\/wiki\/File:En-us-tear-verb.ogg"}]}}}}
 
 slides.push({
+  'term' => term,
   'display' => term,
   'script' => term + '.'
 })
