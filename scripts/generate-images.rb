@@ -80,10 +80,10 @@ def text_break(str)
 end
 
 def clean_defs(term, defs)
-  buf = ""
+  slides = []
   defs.each { |kind, definitions|
     
-    buf += "=== " + kind + " ===\n"
+    kind_slides = []
     
     i = 0
     for definition in definitions
@@ -127,7 +127,7 @@ def clean_defs(term, defs)
         display = display.gsub(/^{{(?:not )?comparable(\|[^\}]*)*}}\s*/, '')
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
-        display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
+        #display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
         display = display.gsub(/^{{senseid\|(?:[^\|]+\|)*([^}]+)}}/, '(\1)')
         
         # identifyable templates
@@ -157,9 +157,10 @@ def clean_defs(term, defs)
             delimiter = ' '
           end
           ret = match
+          ret = ret.gsub(/\|_\|/, '\|')
           ret = ret.gsub(/{{([^}]+)}}/, '(\1)')
           ret = ret.gsub(/\|\s*[^=\|\}]+=\s*/, '|')
-          ret = ret.gsub(/\|/, delimiter)
+          ret = ret.gsub(/\|+/, delimiter)
           ret
         }
         
@@ -193,12 +194,12 @@ def clean_defs(term, defs)
         display = display.gsub(/'''([^'].*?)'''/, '\1')
         display = display.gsub(/''(\w+)''/, '\1')
         display = display.gsub(/''(\([^'\)]+\))''/, '\1')
-        #display = display.gsub(/('+)([^']+)\1/, '\2')
         
         # punctuation and spacing
         display = display.gsub(/,(?:\s*,)+/, ',')
         display = display.gsub(/\)\(/, ') (')
         display = display.gsub(/\|/, ', ')
+        display = display.gsub(/,\s*_\s*,/, ' ')
         display = display.gsub(/\s+/, ' ')
         display = display.gsub(/^\s+|\s+$/, '')
         display = display.gsub(/[.;:,\s]*$/, '.')
@@ -212,48 +213,100 @@ def clean_defs(term, defs)
         # capitalization
         display = display[0].upcase + display[1..-1]
         
-        if !(display =~ /(?:<[\w "'=\/]+>|([\[\]\{\}])\1)/).nil?
-          buf += "  *****************************************************************\n"
-          buf += "  * " + definition + "\n"
-          buf += "  * " + display + "\n"
-          buf += "  *****************************************************************\n"
-        elsif (display =~ /^[\W]*$/).nil?
-          buf += display + "\n"
-        end
+        #
+        #if !(display =~ /(?:<[\w "'=\/]+>|([\[\]\{\}])\1)/).nil?
+        #  buf += "  *****************************************************************\n"
+        #  buf += "  * " + definition + "\n"
+        #  buf += "  * " + display + "\n"
+        #  buf += "  *****************************************************************\n"
+        #elsif (display =~ /^[\W]*$/).nil?
+        #  buf += display + "\n"
+        #end
         
-        # convert wikitext into speakable script
-        script = definition
-        script = ''
+        # create readable script (TBD)
+        script = display
+        script = script.gsub(/^\(([^\)]+)\)\s*/, '\1: ')
+        
+        kind_slides.push({
+          'wikitext' => definition,
+          'display' => term + " (" + kind + ")\n" + i.to_s + ". " + display,
+          'script' => "Definition " + i.to_s + ": " + script
+        })
         
       end
       
     end
     
+    suffix = " definition"
+    if i != 1
+      suffix += 's'
+    end
+    
+    slides.push({
+      'display' => term + "\n(" + kind + ")",
+      'script' => "Part of speech: " + kind + ". " + i.to_s + suffix + "."
+    })
+    
+    slides += kind_slides
+    
   }
-  return buf
+  return slides
+end
+
+def process_all
+  
+  start = ARGV[0]
+  passed_start = start.nil?
+  n = 0
+  
+  STDIN.each_line do |line|
+    term = line.chomp
+    n += 1
+    if passed_start or term == start
+      passed_start = true
+    end
+    if passed_start
+      definitions = extract_defs(term)
+      blob = clean_defs(term, definitions)
+      puts "======= " + n.to_s + " - " + term + " ======="
+      if !blob.index('*****').nil?
+        puts blob
+      end
+    end
+  end
+  
 end
 
 # Read input term from command line
-start = ARGV[0]
-passed_start = start.nil?
-n = 0
+term = ARGV[0]
 
-STDIN.each_line do |line|
-  term = line.chomp
-  n += 1
-  if passed_start or term == start
-    passed_start = true
-  end
-  if passed_start
-    definitions = extract_defs(term)
-    blob = clean_defs(term, definitions)
-    puts "======= " + n.to_s + " - " + term + " ======="
-    if !blob.index('*****').nil?
-      puts blob
-    end
-  end
+defs = extract_defs(term)
+`mkdir -p terms/#{term}`
+
+# create slides
+slides = []
+slides.push({
+  'display' => term,
+  'script' => term + '.'
+})
+
+slides += clean_defs(term, defs)
+
+slides.push({
+  'display' => term,
+  'script' => term + '.'
+})
+
+#puts slides.to_yaml
+
+for slide in slides
+  puts "\n************************************************************************************"
+  puts "** " + slide['display'].gsub(/\n/, "\n** ")
+  puts "************************************************************************************"
+  #puts slide['wikitext'] || ''
+  say = slide['script'].gsub(/[\']/, "'\\\\''")
+  `say '#{say}'`
 end
-
 
 ################################################################################
 exit 1
