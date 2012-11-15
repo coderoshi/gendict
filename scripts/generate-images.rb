@@ -105,6 +105,9 @@ def clean_defs(term, defs)
         # fix improperly closed templates
         display = display.gsub(/\{\{[^\}]+\}(?!\})/, '\&}')
         
+        # simple predictable templates
+        display = display.gsub(/{{,}}/, ',')
+        
         # prefix templates
         display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
         display = display.gsub(/^\s*or\s+{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
@@ -125,9 +128,8 @@ def clean_defs(term, defs)
         display = display.gsub(/{{taxlink\|([^\}]+)}}/, '\1')
         display = display.gsub(/{{l(?:\|[^\|\}]+)*\|([^\}\|]+)}}/, '\1')
         display = display.gsub(/{{(?:defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
-        display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
+        display = display.gsub(/{{(?:gloss|non-gloss definition|n-g)\|(.*?)}}/, '\1')
         display = display.gsub(/{{w\|(.*?)}}/, '\1')
-        display = display.gsub(/{{,}}/, ',')
         
         # unidentifyable prefix templates
         display = display.gsub(/^{{([^}]+)}}/, '(\1)')
@@ -144,6 +146,9 @@ def clean_defs(term, defs)
         display = display.gsub(/<ref>.*?<\/ref>/, '')
         display = display.gsub(/<ref>.*/, '')
         display = display.gsub(/<(math|su[bp])>(.*?)<\/\1>/, '\2')
+        
+        # html comments
+        display = display.gsub(/<!--.*?-->/, '')
         
         # link syntax
         display = display.gsub(/\[\[([^\]\|]+)\]\]/, '\1')
