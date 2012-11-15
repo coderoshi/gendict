@@ -19,14 +19,16 @@ include Magick
 # generate SubRip format closed caption file
 # generate audio for each slide
 
-# Read input term from command line
-term = ARGV[0]
-
 # Extract terms from data dump
 def extract_defs(term)
   
+  # create shell-safe term
+  safe_term = term
+  safe_term = safe_term.gsub(/([\-\[\]\{\}\(\)\*\+\?\.\,\\\^\$\|\#])/, '\\\\\\1')
+  safe_term = safe_term.gsub(/[\']/, "'\\\\''")
+  
   # extract text definitions from TSV dump file
-  data = `grep -P '^English\t#{term}\t' dumps/enwikt-defs-latest-en.tsv`
+  data = `grep -P '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
@@ -61,6 +63,7 @@ def image_gen(term, definitions)
   end
 end
 
+# break text up for image generation
 def text_break(str)
   count=0
   new_str = ""
@@ -76,6 +79,129 @@ def text_break(str)
   new_str
 end
 
+def clean_defs(term, defs)
+  buf = ""
+  defs.each { |kind, definitions|
+    
+    buf += "=== " + kind + " ===\n"
+    
+    i = 0
+    for definition in definitions
+      
+      keep = true
+      
+      # ignore certain definitions
+      keep = keep && (definition =~ /^{{(?:archaic|obsolete|dated)/).nil? #old
+      keep = keep && (definition =~ /^{{rf\w-(?:def|sense)/).nil? # unclear
+      keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil? # unclear
+      
+      if keep
+        
+        i += 1
+        
+        # convert wikitext into displayable definition
+        display = definition
+        
+        # prefix templates
+        display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}/, '')
+        display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
+        display = display.gsub(/^{{([\w ]+)\|chiefly\|[^\}]+}}/, '(\1)')
+        display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
+        display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
+        display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
+        display = display.gsub(/^{{senseid\|(?:[^\|]+\|)*([^}]+)}}/, '(\1)')
+        
+        # identifyable templates
+        display = display.gsub(/{{([A-Z][^\|\}]+)[^\}]*}}/, '(\1)')
+        display = display.gsub(/{{([^\|\}]+ of)\|([^\}]+)}}/, '\1 "\2"')
+        display = display.gsub(/{{context(\|(in|un)?(formal|transitive))*}}/, '')
+        display = display.gsub(/{{(?:context|qualifier|sense|term)\|(.*?)}}/, '(\1)')
+        display = display.gsub(/{{taxlink\|([^\|]+)\|([^\|]+)}}/, '\1 \2')
+        display = display.gsub(/{{(?:defdate|transitive|tritaxon)\|.*?}}/, '')
+        display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
+        display = display.gsub(/{{,}}/, ',')
+        
+        # unidentifyable prefix templates
+        #display = display.gsub(/^{{([^}]+)}}/, '(\1)')
+        
+        # known tags
+        display = display.gsub(/<ref [^>]+(?:\/>|>.*?<\/ref>)/, '')
+        display = display.gsub(/<ref>.*?<\/ref>/, '')
+        display = display.gsub(/<ref>.*/, '')
+        display = display.gsub(/<sup>(.*?)<\/sup>/, '\1')
+        
+        # link syntax
+        display = display.gsub(/\[\[([^\]\|]+)\]\]/, '\1')
+        display = display.gsub(/\[\[(?:[^\]\|]+\|)+([^\]]+)\]\]/, '\1')
+        
+        # emphasis
+        display = display.gsub(/'''([\w ]+)'''/, '"\1"')
+        display = display.gsub(/''(\w+)''/, '\1')
+        display = display.gsub(/('+)([^']+)\1/, '\2')
+        
+        # punctuation and spacing
+        display = display.gsub(/,(?:\s*,)+/, ',')
+        display = display.gsub(/\|/, ', ')
+        display = display.gsub(/\s+/, ' ')
+        display = display.gsub(/^\s+|\s+$/, '')
+        display = display.gsub(/\.*$/, '.')
+        display = display.gsub(/\.+$/, '.')
+        
+        # capitalization
+        display = display[0].upcase + display[1..-1]
+        
+        if !(display =~ /(?:[<>]|([\[\]\{\}])\1)/).nil?
+          buf += "  *****************************************************************\n"
+          buf += "  * " + definition + "\n"
+          buf += "  * " + display + "\n"
+          buf += "  *****************************************************************\n"
+        else
+          buf += display + "\n"
+        end
+        
+        # convert wikitext into speakable script
+        script = definition
+        script = ''
+        
+      end
+      
+    end
+    
+  }
+  return buf
+end
+
+# Read input term from command line
+term = ARGV[0]
+
+if term
+  definitions = extract_defs(term)
+  blob = clean_defs(term, definitions)
+  puts "======= " + term + " ======="
+  puts blob
+else
+  while line = gets
+    term = line.chomp
+    definitions = extract_defs(term)
+    blob = clean_defs(term, definitions)
+    if !blob.index('*****').nil?
+      puts "======= " + term + " ======="
+      puts blob
+      exit 1
+    else
+      puts term
+    end
+  end
+end
+
+
+################################################################################
+exit 1
+################################################################################
+
+# Read input term from command line
+term = ARGV[0]
+
 # create slides
 defs = extract_defs(term)
 `mkdir -p terms/#{term}`
@@ -85,108 +211,6 @@ slides.push({
   'display' => term,
   'script' => term + '.'
 })
-
-defs.each { |kind, definitions|
-  
-  slides.push({
-    'display' => term + "\n(" + kind + ")",
-    'script' => 'Part of speech: ' + kind
-  })
-  
-  puts "\n\n\n=== " + kind + " ===\n\n"
-  
-  i = 0
-  for definition in definitions
-    
-    keep = true
-    
-    # ignore certain definitions
-    keep = keep && (definition =~ /^{{(?:archaic|obsolete|dated)/).nil? #old
-    #keep = keep && (definition =~ /^{{[A-Z]\w+/).nil? # country-specific
-    #keep = keep && (definition =~ /^{{chiefly\|/).nil? # country-specific
-    keep = keep && (definition =~ /^{{rf\w-(?:def|sense)/).nil? # unclear
-    keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil? # unclear
-    
-    if keep
-      
-      i += 1
-      
-      # convert wikitext into displayable definition
-      display = definition
-      
-      # prefixes
-      display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}/, '')
-      display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
-      display = display.gsub(/^{{([\w ]+)\|chiefly\|[^\}]+}}/, '(\1)')
-      display = display.gsub(/^{{([^\|\}]+ of)\|([^\}]+)}}/, '\1 "\2"')
-      display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
-      display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
-      display = display.gsub(/^{{senseid\|(?:[^\|]+\|)*([^}]+)}}/, '(\1)')
-      display = display.gsub(/^{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
-      
-      # identifyable templates
-      display = display.gsub(/{{([A-Z][^\|\}]+)[^\}]*}}/, '(\1)')
-      display = display.gsub(/{{context(\|(in|un)?(formal|transitive))*}}/, '')
-      display = display.gsub(/{{context\|(.*?)}}/, '(\1)')
-      display = display.gsub(/{{taxlink\|([^\|]+)\|([^\|]+)}}/, '\1 \2')
-      display = display.gsub(/{{(?:defdate|transitive|tritaxon)\|.*?}}/, '')
-      display = display.gsub(/{{qualifier\|(.*?)}}/, '(\1)')
-      
-      # unidentifyable prefixes
-      display = display.gsub(/^{{([^}]+)}}/, '(\1)')
-      
-      # link syntax
-      display = display.gsub(/\[\[([^\]\|]+)\]\]/, '\1')
-      display = display.gsub(/\[\[(?:[^\]\|]+\|)+([^\]]+)\]\]/, '\1')
-      
-      # emphasis
-      display = display.gsub(/'''([\w ]+)'''/, '"\1"')
-      display = display.gsub(/''(\w+)''/, '\1')
-      display = display.gsub(/('+)([^']+)\1/, '\2')
-      
-      # punctuation and spacing
-      display = display.gsub(/,(?:\s*,)+/, ',')
-      display = display.gsub(/\|/, ', ')
-      display = display.gsub(/\s+/, ' ')
-      display = display.gsub(/^\s+|\s+$/, '')
-      display = display.gsub(/\.*$/, '.')
-      display = display.gsub(/\.+$/, '.')
-      
-      # capitalization
-      display = display[0].upcase + display[1..-1]
-      
-      if !(display =~ /[\{\}\[\]]/).nil?
-        puts '*****************************************************************'
-        puts '* ' + definition
-        puts '* ' + display
-        puts '*****************************************************************'
-      else
-        puts display
-      end
-      
-      # convert wikitext into speakable script
-      script = definition
-      script = ''
-      
-      slides.push({
-        'display' =>
-          term + " (" + kind + ")\n" +
-          i.to_s + ". " + display,
-        'script' =>
-          'Definition ' + i.to_s + ': ' + script
-      })
-      
-    end
-    
-  end
-  
-  if i == 0
-    slides.pop
-  end
-  
-}
-
-puts "\n\n\n"
 
 #https://en.wiktionary.org/w/api.php?action=query&prop=imageinfo&titles=File:en-us-{#term}.ogg&iiprop=url&format=json
 #{"query":{"pages":{"-1":{"ns":6,"title":"File:en-us-tear-verb.ogg","missing":"","imagerepository":"shared","imageinfo":[{"url":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/b\/b2\/En-us-tear-verb.ogg","descriptionurl":"https:\/\/commons.wikimedia.org\/wiki\/File:En-us-tear-verb.ogg"}]}}}}
