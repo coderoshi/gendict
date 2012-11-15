@@ -90,10 +90,10 @@ def clean_defs(term, defs)
       
       keep = true
       
-      # ignore certain definitions
-      keep = keep && (definition =~ /^{{(?:archaic|obsolete|dated)/).nil? #old
-      keep = keep && (definition =~ /^{{rf\w-(?:def|sense)/).nil? # unclear
-      keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil? # unclear
+      # ignore old and unclear definitions
+      keep = keep && (definition =~ /{{(?:[^}]+\|)?(?:archaic|dated|historical|obsolete|rare)/).nil?
+      keep = keep && (definition =~ /{{rf\w-(?:def|redundant|sense)/).nil?
+      keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil?
       
       if keep
         
@@ -102,8 +102,12 @@ def clean_defs(term, defs)
         # convert wikitext into displayable definition
         display = definition
         
+        # fix improperly closed templates
+        display = display.gsub(/\{\{[^\}]+\}(?!\})/, '\&}')
+        
         # prefix templates
-        display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}/, '')
+        display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
+        display = display.gsub(/^\s*or\s+{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
         display = display.gsub(/^{{([\w ]+)\|chiefly\|[^\}]+}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
@@ -113,39 +117,56 @@ def clean_defs(term, defs)
         
         # identifyable templates
         display = display.gsub(/{{([A-Z][^\|\}]+)[^\}]*}}/, '(\1)')
-        display = display.gsub(/{{([^\|\}]+ of)\|([^\}]+)}}/, '\1 "\2"')
-        display = display.gsub(/{{context(\|(in|un)?(formal|transitive))*}}/, '')
+        display = display.gsub(/{{([^\|\}]+ of)\s*\|([^\}]+)}}/, '\1 "\2"')
+        display = display.gsub(/{{context(\|(in|un)?(formal|transitive))*}}\s*/, '')
+        display = display.gsub(/{{context(?:\|(?:in|un)?(?:formal|transitive))*\|([^}]+)}}/, '(\1)')
         display = display.gsub(/{{(?:context|qualifier|sense|term)\|(.*?)}}/, '(\1)')
-        display = display.gsub(/{{taxlink\|([^\|]+)\|([^\|]+)}}/, '\1 \2')
-        display = display.gsub(/{{(?:defdate|transitive|tritaxon)\|.*?}}/, '')
+        display = display.gsub(/{{taxlink\|([^\|\}]+)\|([^\}]+)}}/, '\1 \2')
+        display = display.gsub(/{{taxlink\|([^\}]+)}}/, '\1')
+        display = display.gsub(/{{l(?:\|[^\|\}]+)*\|([^\}\|]+)}}/, '\1')
+        display = display.gsub(/{{(?:defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
         display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
+        display = display.gsub(/{{w\|(.*?)}}/, '\1')
         display = display.gsub(/{{,}}/, ',')
         
         # unidentifyable prefix templates
-        #display = display.gsub(/^{{([^}]+)}}/, '(\1)')
+        display = display.gsub(/^{{([^}]+)}}/, '(\1)')
+        
+        # protect nowiki
+        nowiki = []
+        display = display.gsub(/<nowiki>(.*?)<\/nowiki>/) { |match|
+          nowiki.push match.gsub(/<nowiki>(.*?)<\/nowiki>/, '\1')
+          '<nowiki>' + nowiki.length.to_s + '</nowiki>'
+        }
         
         # known tags
         display = display.gsub(/<ref [^>]+(?:\/>|>.*?<\/ref>)/, '')
         display = display.gsub(/<ref>.*?<\/ref>/, '')
         display = display.gsub(/<ref>.*/, '')
-        display = display.gsub(/<sup>(.*?)<\/sup>/, '\1')
+        display = display.gsub(/<(math|su[bp])>(.*?)<\/\1>/, '\2')
         
         # link syntax
         display = display.gsub(/\[\[([^\]\|]+)\]\]/, '\1')
         display = display.gsub(/\[\[(?:[^\]\|]+\|)+([^\]]+)\]\]/, '\1')
         
         # emphasis
-        display = display.gsub(/'''([\w ]+)'''/, '"\1"')
+        display = display.gsub(/'''([\w]+)'''/, '"\1"')
+        display = display.gsub(/'''([^'].*?)'''/, '\1')
         display = display.gsub(/''(\w+)''/, '\1')
-        display = display.gsub(/('+)([^']+)\1/, '\2')
+        #display = display.gsub(/('+)([^']+)\1/, '\2')
         
         # punctuation and spacing
         display = display.gsub(/,(?:\s*,)+/, ',')
         display = display.gsub(/\|/, ', ')
         display = display.gsub(/\s+/, ' ')
         display = display.gsub(/^\s+|\s+$/, '')
-        display = display.gsub(/\.*$/, '.')
+        display = display.gsub(/[.;:,\s]*$/, '.')
         display = display.gsub(/\.+$/, '.')
+        
+        # restore nowiki
+        display = display.gsub(/<nowiki>(\d+)<\/nowiki>/) { |match|
+          nowiki[match.to_i]
+        }
         
         # capitalization
         display = display[0].upcase + display[1..-1]
@@ -172,22 +193,22 @@ def clean_defs(term, defs)
 end
 
 # Read input term from command line
-term = ARGV[0]
+start = ARGV[0] || ""
+first = true
 
-if term
-  definitions = extract_defs(term)
-  blob = clean_defs(term, definitions)
-  puts "======= " + term + " ======="
-  puts blob
-else
-  while line = gets
-    term = line.chomp
+STDIN.each_line do |line|
+  term = line.chomp
+  if (term <=> start) >= 0
     definitions = extract_defs(term)
     blob = clean_defs(term, definitions)
     if !blob.index('*****').nil?
       puts "======= " + term + " ======="
       puts blob
       exit 1
+    elsif first
+      first = false
+      puts "======= " + term + " ======="
+      puts blob
     else
       puts term
     end
