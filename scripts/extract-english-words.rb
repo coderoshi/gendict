@@ -8,7 +8,7 @@
 last = nil
 
 while line = gets
-  if !(line =~ /^English\t[a-z]/).nil?
+  if !(line =~ /^English\t[a-z][^\s]*\t/).nil?
     term = line.gsub(/^English\t([a-z][^\t]*).*/, '\1')
     if term != last
       puts term
