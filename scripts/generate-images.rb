@@ -91,7 +91,8 @@ def clean_defs(term, defs)
       keep = true
       
       # ignore old and unclear definitions
-      keep = keep && (definition =~ /{{(?:[^}]+\|)?(?:archaic|dated|historical|obsolete|rare)/).nil?
+      keep = keep && (definition =~ /{{(?:[^}]+\|)?(?:archaic|dated|historical|nonstandard|obsolete|rare)/).nil?
+      keep = keep && (definition =~ /^{{Latn-\w+[^\}]*}}$/).nil?
       keep = keep && (definition =~ /{{rf\w-(?:def|redundant|sense)/).nil?
       keep = keep && (definition =~ /{{rf(?:ex|def)[\|}]/).nil?
       keep = keep && (definition =~ /{{fact[\|\}]/).nil?
@@ -106,20 +107,27 @@ def clean_defs(term, defs)
         # fix improperly closed templates
         display = display.gsub(/\{\{[^\}]+\}(?!\})/, '\&}')
         
-        # numbered template arguments
+        # numbered and named template arguments
         display = display.gsub(/\|\s*\d+\s*=\s*/, '|')
+        display = display.gsub(/\|\s*from\s*=\s*[^\|\}]+/, '')
+        
+        # template parameters
+        display = display.gsub(/\|\s*(?:ambi|in|un)?(?:countable|formal|transitive)\s*(?=[\|\}])/, '')
+        #display = display.gsub(/\|_\|/, '|')
+        display = display.gsub(/\|now\|/, '|')
+        display = display.gsub(/(?<=[\{\|])(chiefly)\|([^\|\}]+)/, '\1 \2')
         
         # simple predictable templates
+        display = display.gsub(/{{label\|([^\}]+)}}/, '{{\1}}')
         display = display.gsub(/{{,}}/, ',')
         display = display.gsub(/{{superl}}/, 'superlative')
         display = display.gsub(/{{term\|([^\|\}]+)[^\}]*}}/, '(\1)')
         
         # prefix templates
-        display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
-        display = display.gsub(/^\s*or\s+{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
-        display = display.gsub(/^{{comparable(\|[^\}]*)*}}\s*/, '')
+        display = display.gsub(/^{{(ambi|in|un)?(countable|formal|transitive)[^\}]*}}\s*/, '')
+        display = display.gsub(/^\s*or\s+{{(ambi|in|un)?(countable|formal|transitive)[^\}]*}}\s*/, '')
+        display = display.gsub(/^{{(?:not )?comparable(\|[^\}]*)*}}\s*/, '')
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
-        display = display.gsub(/^{{([\w ]+)\|chiefly\|[^\}]+}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
         display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
         display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
@@ -136,16 +144,39 @@ def clean_defs(term, defs)
         display = display.gsub(/{{taxlink\|([^\|\}]+)\|([^\}]+)}}/, '\1 \2')
         display = display.gsub(/{{taxlink\|([^\}]+)}}/, '\1')
         display = display.gsub(/{{l(?:\|[^\|\}]+)*\|([^\}\|]+)}}/, '\1')
-        display = display.gsub(/{{(?:defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
         display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
         display = display.gsub(/{{(?:gloss|w)\|(.*?)}}/, '\1')
-        display = display.gsub(/{{(aviation|derogatory|engineering|geometry|in the plural|proscribed)(\|[^\}]*)?}}/, '\1')
-        display = display.gsub(/{{(short for|often|dialect)\s*\|([^\}]+)}}/, '\1 \2')
+        display = display.gsub(/{{(short for|of a|often|dialect)\s*\|([^\}]+)}}/, '\1 \2')
         display = display.gsub(/{{soplink\|([^\|\}]+)\|([^\|\}]+)}}/, '\1 \2')
         display = display.gsub(/{{etyl\|yi\|[^\}]*}}/, 'Yiddish')
         
-        # unidentifyable prefix templates
-        #display = display.gsub(/^{{([^}]+)}}/, '(\1)')
+        # templates which can be removed wholesale
+        display = display.gsub(/{{(?:by extension|defn|defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
+        
+        # templates for which only the name matters
+        #display = display.gsub(/{{(aviation|baseball|basketball|biology|\w+boarding)(\|[^\}]*)?}}/, '\1')
+        #display = display.gsub(/{{(derogatory|engineering|euphemistic|geometry|in the plural)(\|[^\}]*)?}}/, '\1')
+        #display = display.gsub(/{{(linguistics|logic|math\w*|nautical|poker)(\|[^\}]*)?}}/, '\1')
+        #display = display.gsub(/{{(proscribed|scientific|surname)(\|[^\}]*)?}}/, '\1')
+        
+        # templates which should be kept in whole
+        #display = display.gsub(/{{((?:algebra|analysis|anthropology|botany|colloquial|copulative|cricket)(?:\|[^\|\}]+)*)}}/, '\1')
+        #display = display.gsub(/{{((?:figuratively|gaming|given name|legal|meteorology)(?:\|[^\|\}]+)*)}}/, '\1')
+        #display = display.gsub(/{{((?:music|personal|physics|rail transport|reflexive)(?:\|[^\|\}]+)*)}}/, '\1')
+        #display = display.gsub(/{{((?:theology|sports|usually)(?:\|[^\|\}]+)*)}}/, '\1')
+        
+        # any remaining unidentified un-nested templates
+        display = display.gsub(/{{([^}]+)}}/) { |match|
+          delimiter = ','
+          if !(match =~ /\|_\|/).nil?
+            delimiter = ' '
+          end
+          ret = match
+          ret = ret.gsub(/{{([^}]+)}}/, '\1')
+          ret = ret.gsub(/\|\s*[^=\|\}]+=\s*/, '|')
+          ret = ret.gsub(/\|/, delimiter)
+          ret
+        }
         
         # protect nowiki
         nowiki = []
@@ -171,6 +202,7 @@ def clean_defs(term, defs)
         display = display.gsub(/'''([\w]+)'''/, '"\1"')
         display = display.gsub(/'''([^'].*?)'''/, '\1')
         display = display.gsub(/''(\w+)''/, '\1')
+        display = display.gsub(/''(\([^'\)]+\))''/, '\1')
         #display = display.gsub(/('+)([^']+)\1/, '\2')
         
         # punctuation and spacing
@@ -195,7 +227,7 @@ def clean_defs(term, defs)
           buf += "  * " + definition + "\n"
           buf += "  * " + display + "\n"
           buf += "  *****************************************************************\n"
-        else
+        elsif (display =~ /^[\W]*$/).nil?
           buf += display + "\n"
         end
         
@@ -212,8 +244,8 @@ def clean_defs(term, defs)
 end
 
 # Read input term from command line
-start = ARGV[0] || ""
-passed_start = !!start
+start = ARGV[0]
+passed_start = start.nil?
 n = 0
 
 STDIN.each_line do |line|
@@ -225,7 +257,7 @@ STDIN.each_line do |line|
   if passed_start
     definitions = extract_defs(term)
     blob = clean_defs(term, definitions)
-    puts n.to_s + "\t" + term
+    puts "======= " + n.to_s + " - " + term + " ======="
     if !blob.index('*****').nil?
       puts blob
       exit 1
