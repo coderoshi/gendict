@@ -111,6 +111,7 @@ def clean_defs(term, defs)
         # prefix templates
         display = display.gsub(/^{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
         display = display.gsub(/^\s*or\s+{{(in|un)?(transitive|formal|countable)[^\}]*}}\s*/, '')
+        display = display.gsub(/^{{comparable(\|[^\}]*)*}}\s*/, '')
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
         display = display.gsub(/^{{([\w ]+)\|chiefly\|[^\}]+}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
@@ -128,8 +129,9 @@ def clean_defs(term, defs)
         display = display.gsub(/{{taxlink\|([^\}]+)}}/, '\1')
         display = display.gsub(/{{l(?:\|[^\|\}]+)*\|([^\}\|]+)}}/, '\1')
         display = display.gsub(/{{(?:defdate|jump|transitive|tritaxon)\|.*?}}\s*/, '')
-        display = display.gsub(/{{(?:gloss|non-gloss definition|n-g)\|(.*?)}}/, '\1')
-        display = display.gsub(/{{w\|(.*?)}}/, '\1')
+        display = display.gsub(/{{(?:non-gloss definition|n-g)\|(.*?)}}/, '\1')
+        display = display.gsub(/{{(?:gloss|w)\|(.*?)}}/, '\1')
+        display = display.gsub(/{{(engineering)(\|[^\}])?}}/, '\1')
         
         # unidentifyable prefix templates
         display = display.gsub(/^{{([^}]+)}}/, '(\1)')
@@ -199,10 +201,12 @@ end
 
 # Read input term from command line
 start = ARGV[0] || ""
-first = true
+first = !start
+n = 0
 
 STDIN.each_line do |line|
   term = line.chomp
+  n += 1
   if (term <=> start) >= 0
     definitions = extract_defs(term)
     blob = clean_defs(term, definitions)
@@ -215,7 +219,7 @@ STDIN.each_line do |line|
       puts "======= " + term + " ======="
       puts blob
     else
-      puts term
+      puts n.to_s + "\t" + term
     end
   end
 end
