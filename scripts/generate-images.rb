@@ -130,7 +130,7 @@ def clean_defs(term, defs)
         display = display.gsub(/^{{([\w ]+)}}/, '(\1)')
         display = display.gsub(/^{{chiefly\|([^\}]+)}}/, '(\1)')
         display = display.gsub(/^{{(\w+)\|_\|(\w+)}}/, '(\1 \2)')
-        display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
+        #display = display.gsub(/^{{(computing|slang)(?:\|.*?)?}}/, '(\1)')
         display = display.gsub(/^{{senseid\|(?:[^\|]+\|)*([^}]+)}}/, '(\1)')
         
         # identifyable templates
@@ -167,12 +167,12 @@ def clean_defs(term, defs)
         
         # any remaining unidentified un-nested templates
         display = display.gsub(/{{([^}]+)}}/) { |match|
-          delimiter = ','
+          delimiter = ', '
           if !(match =~ /\|_\|/).nil?
             delimiter = ' '
           end
           ret = match
-          ret = ret.gsub(/{{([^}]+)}}/, '\1')
+          ret = ret.gsub(/{{([^}]+)}}/, '(\1)')
           ret = ret.gsub(/\|\s*[^=\|\}]+=\s*/, '|')
           ret = ret.gsub(/\|/, delimiter)
           ret
@@ -180,16 +180,21 @@ def clean_defs(term, defs)
         
         # protect nowiki
         nowiki = []
+        display = display.gsub(/<nowiki\/>/, '')
         display = display.gsub(/<nowiki>(.*?)<\/nowiki>/) { |match|
           nowiki.push match.gsub(/<nowiki>(.*?)<\/nowiki>/, '\1')
           '<nowiki>' + nowiki.length.to_s + '</nowiki>'
         }
         
         # known tags
-        display = display.gsub(/<(ref|span) [^>]+(?:\/>|>.*?<\/\1>)/, '')
+        display = display.gsub(/<(ref) [^>]+(?:\/>|>.*?<\/\1>)/, '')
         display = display.gsub(/<ref>.*?<\/ref>/, '')
         display = display.gsub(/<ref>.*/, '')
-        display = display.gsub(/<(math|su[bp])>(.*?)<\/\1>/, '\2')
+        display = display.gsub(/<(b|div|i|span|su[bp])(?: [^>]+)?>(.*?)<\/\1>/, '\2')
+        display = display.gsub(/<(br)(?: [^>]+)?>/, '')
+        display = display.gsub(/<math>(.*?)<\/math>/) { |match| 
+          match.gsub(/<math>(.*?)<\/math>/, '\1').gsub(/\\/, '')
+        }
         
         # html comments
         display = display.gsub(/<!--.*?-->/, '')
@@ -260,7 +265,6 @@ STDIN.each_line do |line|
     puts "======= " + n.to_s + " - " + term + " ======="
     if !blob.index('*****').nil?
       puts blob
-      exit 1
     end
   end
 end
