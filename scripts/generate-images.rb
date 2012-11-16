@@ -324,7 +324,7 @@ def image_gen(slide)
     body_text = Magick::Draw.new
     body_text.pointsize = 48
     body_text.gravity = Magick::NorthWestGravity
-    body = text_break(body, 25)
+    body = text_break(body, 24)
     
     if body.count("\n") > 5
       body = text_break(body, 28)
@@ -367,7 +367,7 @@ def audio_gen(slide)
     end
   end
   file_name += ".WAV"
-  say = command_arg(';;;' + slide['script'] + ';;;')
+  say = command_arg(';;' + slide['script'] + ';;')
   output = command_arg(file_name)
   `say #{say} -o #{output}`
   slide['audio'] = file_name
