@@ -79,12 +79,13 @@ end
 def image_gen(term, definitions)
   for kind, defin in definitions
     # f = Image.new(800,500) { self.background_color = "white" }
-    granite = Magick::ImageList.new('granite:')
+    # granite = Magick::ImageList.new('granite:')
+    base = Magick::Image.read("assets/bg1.png")[0]
     canvas = Magick::ImageList.new
-    canvas.new_image(656, 492, Magick::TextureFill.new(granite))
+    canvas.new_image(1280, 720, Magick::TextureFill.new(base))
 
     text = Magick::Draw.new
-    # text.font_family = 'helvetica'
+    text.font_family = 'Goudy Bookletter 1911'
     text.pointsize = 52
     text.gravity = Magick::CenterGravity
     formatted_def = text_break(defin)
@@ -92,7 +93,7 @@ def image_gen(term, definitions)
     text.annotate(canvas, 0,0,0,0, formatted_def) {
       self.fill = 'black'
     }
-    canvas.append(true).write("terms/#{term}/#{kind}.jpeg")
+    canvas.append(true).write("terms/#{term}/#{kind}.png")
   end
 end
 
@@ -100,7 +101,7 @@ end
 def video_gen(term)
   `mkdir -p terms/#{term}`
   definitions = get_definitions(term)
-  audio_gen(term, definitions)
+  # audio_gen(term, definitions)
   image_gen(term, definitions)
 
   # ffmpeg -y -loop 1 -r 1 -i noun.png -acodec copy -i noun.aiff -shortest thisvid.mp4
