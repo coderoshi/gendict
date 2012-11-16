@@ -25,10 +25,10 @@ def extract_defs(term)
   # create shell-safe term
   safe_term = term
   safe_term = safe_term.gsub(/([\-\[\]\{\}\(\)\*\+\?\.\,\\\^\$\|\#])/, '\\\\\\1')
-  safe_term = command_arg(safe_term)
+  safe_term = command_arg("^English\\t#{safe_term}\\t")
   
   # extract text definitions from TSV dump file
-  data = `grep -P '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
+  data = `grep -P #{safe_term} dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
@@ -285,6 +285,20 @@ def text_break(str, width)
   new_str
 end
 
+def file_name_gen(slide, suffix)
+  term = slide['term']
+  kind = slide['kind'] || nil
+  index = slide['index'] || nil
+  file_name = "terms/#{term}/#{term}"
+  if kind
+    file_name += "-#{kind}"
+    if index
+      file_name += "-#{index}"
+    end
+  end
+  file_name + suffix
+end
+
 # Generate image
 def image_gen(slide)
   
@@ -337,14 +351,7 @@ def image_gen(slide)
     }
   end
   
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".jpeg"
+  file_name = file_name_gen(slide, ".jpeg")
   
   canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
@@ -359,14 +366,7 @@ def audio_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
   index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".WAV"
+  file_name = file_name_gen(slide, ".WAV")
   say = command_arg(';;' + slide['script'] + ';;')
   output = command_arg(file_name)
   `say #{say} -o #{output}`
@@ -377,14 +377,7 @@ def video_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
   index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".avi"
+  file_name = file_name_gen(slide, ".avi")
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
@@ -408,7 +401,8 @@ end
 term = ARGV[0]
 
 defs = extract_defs(term)
-`mkdir -p terms/#{term}`
+path = command_arg("terms/#{term}")
+`mkdir -p #{path}`
 
 # create slides
 slides = []
@@ -438,6 +432,8 @@ for slide in slides
 end
 
 combine_video(term, slides)
+
+
 
 ################################################################################
 exit 1
