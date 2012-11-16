@@ -346,7 +346,7 @@ def image_gen(slide)
   end
   file_name += ".jpeg"
   
-  canvas.append(true).write("#{file_name}")
+  #canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
   
 end
@@ -369,7 +369,7 @@ def audio_gen(slide)
   file_name += ".WAV"
   say = command_arg(';;;' + slide['script'] + ';;;')
   output = command_arg(file_name)
-  `say #{say} -o #{output}`
+  #`say #{say} -o #{output}`
   slide['audio'] = file_name
 end
 
@@ -388,8 +388,20 @@ def video_gen(slide)
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
-  `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mjpeg #{video}`
+  #`ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mjpeg #{video}`
   slide['video'] = file_name
+end
+
+def combine_video(term, slides)
+  cmd = 'cat'
+  for slide in slides
+    cmd += " " + command_arg(slide['video'])
+  end
+  combined = command_arg("terms/#{term}/#{term}_combined.avi")
+  final = command_arg("terms/#{term}.avi")
+  cmd += " > #{combined}"
+  `#{cmd}`
+  `ffmpeg -i #{combined} -r 25 -sameq #{final}`
 end
 
 # Read input term from command line
@@ -424,6 +436,8 @@ for slide in slides
   audio_gen(slide)
   video_gen(slide)
 end
+
+combine_video(term, slides)
 
 ################################################################################
 exit 1
