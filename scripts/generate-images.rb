@@ -19,6 +19,9 @@ include Magick
 # generate SubRip format closed caption file
 # generate audio for each slide
 
+VPIXELS, HPIXELS = 1280, 720
+IMAGE_KIND = 'bmp'
+
 # Extract terms from data dump
 def extract_defs(term)
   
@@ -46,12 +49,15 @@ end
 def image_gen(term, definitions)
   for kind, defin in definitions
     # f = Image.new(800,500) { self.background_color = "white" }
-    granite = Magick::ImageList.new('granite:')
+    base = Magick::Image.read("assets/bg1.png")[0]
     canvas = Magick::ImageList.new
-    canvas.new_image(656, 492, Magick::TextureFill.new(granite))
+    canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(base))
 
     text = Magick::Draw.new
     # text.font_family = 'helvetica'
+
+    # defin
+
     text.pointsize = 52
     text.gravity = Magick::CenterGravity
     formatted_def = text_break(defin)
@@ -59,7 +65,7 @@ def image_gen(term, definitions)
     text.annotate(canvas, 0,0,0,0, formatted_def) {
       self.fill = 'black'
     }
-    canvas.append(true).write("terms/#{term}/#{kind}.jpeg")
+    canvas.append(true).write("terms/#{term}/#{kind}.#{IMAGE_KIND}")
   end
 end
 
@@ -308,9 +314,9 @@ def image_gen(slide)
   body = slide['display'] || nil
   
   # f = Image.new(800,500) { self.background_color = "white" }
-  granite = Magick::ImageList.new('granite:')
+  base = Magick::Image.read("assets/bg1.png")[0]
   canvas = Magick::ImageList.new
-  canvas.new_image(656, 492, Magick::TextureFill.new(granite))
+  canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(base))
 
   # heading
   heading = term
@@ -351,7 +357,7 @@ def image_gen(slide)
     }
   end
   
-  file_name = file_name_gen(slide, ".jpeg")
+  file_name = file_name_gen(slide, ".#{IMAGE_KIND}")
   
   canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
@@ -369,7 +375,7 @@ def audio_gen(slide)
   file_name = file_name_gen(slide, ".WAV")
   say = command_arg(';;' + slide['script'] + ';;')
   output = command_arg(file_name)
-  `say #{say} -o #{output}`
+  `say -v Jill #{say} -o #{output}`
   slide['audio'] = file_name
 end
 
@@ -471,9 +477,10 @@ defs.each { |kind, definitions|
   i = 0
   for defin in definitions
     i += 1
-    granite = Magick::ImageList.new('granite:')
+    # granite = Magick::ImageList.new('granite:')
+    base = Magick::Image.read("assets/bg1.png")[0]
     canvas = Magick::ImageList.new
-    canvas.new_image(656, 492, Magick::TextureFill.new(granite))
+    canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(granite))
     text = Magick::Draw.new
     # text.font_family = 'helvetica'
     text.pointsize = 52
@@ -483,8 +490,7 @@ defs.each { |kind, definitions|
     text.annotate(canvas, 0,0,0,0, formatted_def) {
       self.fill = 'black'
     }
-    canvas.append(true).write("terms/#{term}/#{term}-#{kind}-#{i}.jpeg")
+    canvas.append(true).write("terms/#{term}/#{term}-#{kind}-#{i}.#{IMAGE_KIND}")
   end
 }
-
 
