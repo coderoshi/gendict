@@ -346,7 +346,7 @@ def image_gen(slide)
   end
   file_name += ".jpeg"
   
-  #canvas.append(true).write("#{file_name}")
+  canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
   
 end
@@ -369,7 +369,7 @@ def audio_gen(slide)
   file_name += ".WAV"
   say = command_arg(';;;' + slide['script'] + ';;;')
   output = command_arg(file_name)
-  #`say #{say} -o #{output}`
+  `say #{say} -o #{output}`
   slide['audio'] = file_name
 end
 
@@ -388,7 +388,7 @@ def video_gen(slide)
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
-  #`ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mjpeg #{video}`
+  `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
   slide['video'] = file_name
 end
 
