@@ -25,7 +25,7 @@ def extract_defs(term)
   # create shell-safe term
   safe_term = term
   safe_term = safe_term.gsub(/([\-\[\]\{\}\(\)\*\+\?\.\,\\\^\$\|\#])/, '\\\\\\1')
-  safe_term = safe_term.gsub(/[\']/, "'\\\\''")
+  safe_term = command_arg(safe_term)
   
   # extract text definitions from TSV dump file
   data = `grep -P '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
@@ -315,7 +315,7 @@ def image_gen(slide)
     heading_text.gravity = Magick::CenterGravity
   end
   #formatted_def = text_break(slide['display'])
-  heading_text.annotate(canvas, 0,0,0,0, heading) {
+  heading_text.annotate(canvas, 0,0,10,0, heading) {
     self.fill = 'black'
   }
   
@@ -327,7 +327,7 @@ def image_gen(slide)
     body = text_break(body, 25)
     
     if body.count("\n") > 5
-      body = text_break(body, 30)
+      body = text_break(body, 28)
       body_text.pointsize = 44
     end
     
@@ -351,6 +351,10 @@ def image_gen(slide)
   
 end
 
+def command_arg(str)
+  "'" + str.gsub(/[\']/, "'\\\\''") + "'"
+end
+
 def audio_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
@@ -362,10 +366,30 @@ def audio_gen(slide)
       file_name += "-#{index}"
     end
   end
-  file_name += ".aiff"
-  say = slide['script'].gsub(/[\']/, "'\\\\''")
-  `say '#{say}' -o '#{file_name}'`
+  file_name += ".WAV"
+  say = command_arg(';;;' + slide['script'] + ';;;')
+  output = command_arg(file_name)
+  `say #{say} -o #{output}`
   slide['audio'] = file_name
+end
+
+def video_gen(slide)
+  term = slide['term']
+  kind = slide['kind'] || nil
+  index = slide['index'] || nil
+  file_name = "terms/#{term}/#{term}"
+  if kind
+    file_name += "-#{kind}"
+    if index
+      file_name += "-#{index}"
+    end
+  end
+  file_name += ".avi"
+  audio = command_arg(slide['audio'])
+  image = command_arg(slide['image'])
+  video = command_arg(file_name)
+  `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mjpeg #{video}`
+  slide['video'] = file_name
 end
 
 # Read input term from command line
@@ -398,6 +422,7 @@ for slide in slides
   puts "************************************************************************************"
   image_gen(slide)
   audio_gen(slide)
+  video_gen(slide)
 end
 
 ################################################################################
