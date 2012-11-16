@@ -189,6 +189,7 @@ def clean_defs(term, defs)
         display = display.gsub(/,(?:\s*,)+/, ',')
         display = display.gsub(/\)\(/, ') (')
         display = display.gsub(/\|/, ', ')
+        display = display.gsub(/&nbsp;/, ' ')
         display = display.gsub(/,\s*_\s*,/, ' ')
         display = display.gsub(/\s+/, ' ')
         display = display.gsub(/^\s+|\s+$/, '')
@@ -223,7 +224,7 @@ def clean_defs(term, defs)
           'index' => i,
           'wikitext' => definition,
           'display' => i.to_s + ". " + display,
-          'script' => "Definition " + i.to_s + ": " + script
+          'script' => "Definition " + i.to_s + ": [[slnc 500]] " + script
         })
         
       end
@@ -239,7 +240,7 @@ def clean_defs(term, defs)
       'term' => term,
       'kind' => kind,
       'display' => term + "\n(" + kind + ")",
-      'script' => "Part of speech: " + kind + ". " + i.to_s + suffix + "."
+      'script' => "Part of speech: " + kind + ". [[slnc 500]] " + i.to_s + suffix + "."
     })
     
     slides += kind_slides
@@ -373,7 +374,7 @@ def audio_gen(slide)
   kind = slide['kind'] || nil
   index = slide['index'] || nil
   file_name = file_name_gen(slide, ".WAV")
-  say = command_arg(';;' + slide['script'] + ';;')
+  say = command_arg('[[slnc 1000]]' + slide['script'] + '[[slnc 1000]]')
   output = command_arg(file_name)
   `say -v Jill #{say} -o #{output}`
   slide['audio'] = file_name
