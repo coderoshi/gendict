@@ -1,6 +1,7 @@
 
 require 'RMagick'
 require 'yaml'
+require 'titleize'
 
 include Magick
 
@@ -24,9 +25,9 @@ VPIXELS = 720
 IMAGE_KIND = 'png'
 BACKGROUND = 'assets/bg2.png'
 BODY_FONT = 'Goudy Bookletter 1911'
-HEAD_FONT = 'Blue Highway'
+HEAD_FONT = 'Blue Highway' #'Eurostile'
 BASE_FONT_SIZE = 82
-HEAD_FONT_SIZE = 116
+HEAD_FONT_SIZE = 116 #96
 BODY_FONT_SIZE = 78
 
 # Extract terms from data dump
@@ -38,8 +39,7 @@ def extract_defs(term)
   safe_term = command_arg(safe_term)
   
   # extract text definitions from TSV dump file
-  data = `grep -P '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
-  # data = `grep '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
+  data = `grep '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
@@ -296,14 +296,14 @@ def text_break(str, width=40)
   new_str
 end
 
-def annotate(draw, canvas, width, height, x, y, text, shadow=false)
+def annotate(draw, canvas, width, height, x, y, text, color='#16313f', shadow=true)
   if shadow
     draw.annotate(canvas, width, height, x+2, y+2, text) {
       self.fill = '#D0DDFF'
     }
   end
   draw.annotate(canvas, width, height, x, y, text) {
-    self.fill = 'black'
+    self.fill = color
   }
 end
 
@@ -321,7 +321,7 @@ def image_gen(slide)
   canvas.new_image(HPIXELS, VPIXELS, Magick::TextureFill.new(base))
 
   # heading
-  heading = term
+  heading = term.titleize
   heading_text = Magick::Draw.new
   heading_text.font_family = HEAD_FONT
   heading_text.pointsize = HEAD_FONT_SIZE
@@ -339,7 +339,7 @@ def image_gen(slide)
     heading_text.gravity = Magick::CenterGravity
   end
   #formatted_def = text_break(slide['display'])
-  annotate(heading_text, canvas, 0,0,15,10, heading, true)
+  annotate(heading_text, canvas, 0,0,15,15, heading)
   
   # body
   if index
@@ -357,7 +357,7 @@ def image_gen(slide)
     end
     
     #formatted_def = text_break(slide['display'])
-    annotate(body_text, canvas, 0,0,40,110, body, true)
+    annotate(body_text, canvas, 0,0,40,110, body)
   end
   
   file_name = "terms/#{term}/#{term}"
@@ -413,10 +413,10 @@ def video_gen(slide)
   video = command_arg(file_name)
 
   # ffmpeg version < 1.0
-  # `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
+  `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
 
   # ffmpeg version >= 1.0
-  `ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
+  # `ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
   slide['video'] = file_name
 end
 
