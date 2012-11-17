@@ -19,8 +19,15 @@ include Magick
 # generate SubRip format closed caption file
 # generate audio for each slide
 
-VPIXELS, HPIXELS = 1280, 720
-IMAGE_KIND = 'bmp'
+HPIXELS = 1280
+VPIXELS = 720
+IMAGE_KIND = 'png'
+BACKGROUND = 'assets/bg2.png'
+BODY_FONT = 'Goudy Bookletter 1911'
+HEAD_FONT = 'Blue Highway'
+BASE_FONT_SIZE = 82
+HEAD_FONT_SIZE = 116
+BODY_FONT_SIZE = 78
 
 # Extract terms from data dump
 def extract_defs(term)
@@ -32,6 +39,7 @@ def extract_defs(term)
   
   # extract text definitions from TSV dump file
   data = `grep -P '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
+  # data = `grep '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
@@ -49,16 +57,13 @@ end
 def image_gen(term, definitions)
   for kind, defin in definitions
     # f = Image.new(800,500) { self.background_color = "white" }
-    base = Magick::Image.read("assets/bg1.png")[0]
+    base = Magick::Image.read(BACKGROUND)[0]
     canvas = Magick::ImageList.new
-    canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(base))
+    canvas.new_image(HPIXELS, VPIXELS, Magick::TextureFill.new(base))
 
     text = Magick::Draw.new
-    # text.font_family = 'helvetica'
-
-    # defin
-
-    text.pointsize = 52
+    text.font_family = BODY_FONT
+    text.pointsize = BASE_FONT_SIZE
     text.gravity = Magick::CenterGravity
     formatted_def = text_break(defin)
     formatted_def = "#{term.upcase}:\n#{formatted_def}"
@@ -273,7 +278,7 @@ def process_all
 end
 
 # break text up for image generation
-def text_break(str, width)
+def text_break(str, width=40)
   new_str = ""
   count=0
   str.split.each{|word|
@@ -291,6 +296,17 @@ def text_break(str, width)
   new_str
 end
 
+def annotate(draw, canvas, width, height, x, y, text, shadow=false)
+  if shadow
+    draw.annotate(canvas, width, height, x+2, y+2, text) {
+      self.fill = '#D0DDFF'
+    }
+  end
+  draw.annotate(canvas, width, height, x, y, text) {
+    self.fill = 'black'
+  }
+end
+
 # Generate image
 def image_gen(slide)
   
@@ -300,14 +316,16 @@ def image_gen(slide)
   body = slide['display'] || nil
   
   # f = Image.new(800,500) { self.background_color = "white" }
-  base = Magick::Image.read("assets/bg1.png")[0]
+  base = Magick::Image.read(BACKGROUND)[0]
   canvas = Magick::ImageList.new
-  canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(base))
+  canvas.new_image(HPIXELS, VPIXELS, Magick::TextureFill.new(base))
 
   # heading
   heading = term
   heading_text = Magick::Draw.new
-  heading_text.pointsize = 52
+  heading_text.font_family = HEAD_FONT
+  heading_text.pointsize = HEAD_FONT_SIZE
+  heading_text.interline_spacing = -(HEAD_FONT_SIZE * 0.10)
   if kind
     if index
       heading += " (" + kind + ")"
@@ -321,26 +339,25 @@ def image_gen(slide)
     heading_text.gravity = Magick::CenterGravity
   end
   #formatted_def = text_break(slide['display'])
-  heading_text.annotate(canvas, 0,0,10,0, heading) {
-    self.fill = 'black'
-  }
+  annotate(heading_text, canvas, 0,0,15,10, heading, true)
   
   # body
   if index
     body_text = Magick::Draw.new
-    body_text.pointsize = 48
+    body_text.interline_spacing = -(BODY_FONT_SIZE * 0.20)
+    body_text.font_family = BODY_FONT
+    body_text.pointsize = BODY_FONT_SIZE
     body_text.gravity = Magick::NorthWestGravity
-    body = text_break(body, 24)
+    body = text_break(body) #, 24)
     
-    if body.count("\n") > 5
-      body = text_break(body, 28)
-      body_text.pointsize = 44
+    line_count = body.count("\n")
+    if line_count > 5
+      body = text_break(body, 44) #, 28)
+      body_text.pointsize = BODY_FONT_SIZE - (line_count - 5) * 4
     end
     
     #formatted_def = text_break(slide['display'])
-    body_text.annotate(canvas, 0,0,20,80, body) {
-      self.fill = 'black'
-    }
+    annotate(body_text, canvas, 0,0,40,110, body, true)
   end
   
   file_name = "terms/#{term}/#{term}"
@@ -394,7 +411,12 @@ def video_gen(slide)
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
-  `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
+
+  # ffmpeg version < 1.0
+  # `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
+
+  # ffmpeg version >= 1.0
+  `ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
   slide['video'] = file_name
 end
 
@@ -482,12 +504,12 @@ defs.each { |kind, definitions|
   for defin in definitions
     i += 1
     # granite = Magick::ImageList.new('granite:')
-    base = Magick::Image.read("assets/bg1.png")[0]
+    base = Magick::Image.read(BACKGROUND)[0]
     canvas = Magick::ImageList.new
-    canvas.new_image(VPIXELS, HPIXELS, Magick::TextureFill.new(granite))
+    canvas.new_image(HPIXELS, VPIXELS, Magick::TextureFill.new(granite))
     text = Magick::Draw.new
-    # text.font_family = 'helvetica'
-    text.pointsize = 52
+    text.font_family = BODY_FONT
+    text.pointsize = BASE_FONT_SIZE
     text.gravity = Magick::CenterGravity
     formatted_def = text_break(defin)
     formatted_def = "#{term.upcase}:\n#{formatted_def}"
