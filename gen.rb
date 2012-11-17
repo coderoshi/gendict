@@ -80,7 +80,7 @@ def image_gen(term, definitions)
   for kind, defin in definitions
     # f = Image.new(800,500) { self.background_color = "white" }
     # granite = Magick::ImageList.new('granite:')
-    base = Magick::Image.read("assets/bg1.png")[0]
+    base = Magick::Image.read("assets/bg2.png")[0]
     canvas = Magick::ImageList.new
     canvas.new_image(1280, 720, Magick::TextureFill.new(base))
 
