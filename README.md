@@ -7,6 +7,7 @@
  * `gem install nokogiri`
  * `C_INCLUDE_PATH=/usr/local/Cellar/imagemagick/6.7.7-6/include/ImageMagick gem install rmagick`
 5. `gem install bundler && bundler install`
+6. `gem install titleize`
 
 ## Grab the latest word list and definitions
 
