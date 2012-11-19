@@ -12,6 +12,7 @@
 #  - Use command-line arg flag to allow output YAML to be pushed to a file
 #  - Grab raw wiktionary definitions from a random-access datastore rather than
 #    always grepping through the tsv file.
+#  - Move common functionality like command_arg() to separate Module
 
 require 'yaml'
 
