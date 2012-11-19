@@ -22,7 +22,8 @@ include Magick
 
 HPIXELS = 1280
 VPIXELS = 720
-IMAGE_KIND = 'png'
+#IMAGE_KIND = 'png'
+IMAGE_KIND = 'jpeg'
 BACKGROUND = 'assets/bg2.png'
 BODY_FONT = 'Goudy Bookletter 1911'
 HEAD_FONT = 'Blue Highway' #'Eurostile'
@@ -410,7 +411,7 @@ def video_gen(slide)
   `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
 
   # ffmpeg version >= 1.0
-  # `ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
+  #`ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
   slide['video'] = file_name
 end
 
