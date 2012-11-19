@@ -6,14 +6,11 @@
 
 require 'yaml'
 
-# TODO: read all STDIN and produce slides array by parsing YAML
+slides = YAML::load(STDIN.read)
 
 for slide in slides
   puts "\n************************************************************************************"
   puts "** " + slide['display'].gsub(/\n/, "\n** ")
   puts "************************************************************************************"
-  image_gen(slide)
-  audio_gen(slide)
-  video_gen(slide)
 end
 
