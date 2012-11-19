@@ -3,6 +3,7 @@ GEM
   specs:
     nokogiri (1.5.5)
     rmagick (2.13.1)
+    titleize (1.2.1)
 
 PLATFORMS
   ruby
@@ -10,3 +11,4 @@ PLATFORMS
 DEPENDENCIES
   nokogiri
   rmagick
+  titleize
