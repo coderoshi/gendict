@@ -89,7 +89,7 @@ def image_gen(slide)
   canvas.new_image(HPIXELS, VPIXELS, Magick::TextureFill.new(base))
 
   # heading
-  heading = term.titleize
+  heading = term #.titleize
   heading_text = Magick::Draw.new
   heading_text.font_family = HEAD_FONT
   heading_text.pointsize = HEAD_FONT_SIZE
