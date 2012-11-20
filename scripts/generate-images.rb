@@ -22,7 +22,8 @@ include Magick
 
 HPIXELS = 1280
 VPIXELS = 720
-IMAGE_KIND = 'png'
+#IMAGE_KIND = 'png'
+IMAGE_KIND = 'jpeg'
 BACKGROUND = 'assets/bg2.png'
 BODY_FONT = 'Goudy Bookletter 1911'
 HEAD_FONT = 'Blue Highway' #'Eurostile'
@@ -36,10 +37,10 @@ def extract_defs(term)
   # create shell-safe term
   safe_term = term
   safe_term = safe_term.gsub(/([\-\[\]\{\}\(\)\*\+\?\.\,\\\^\$\|\#])/, '\\\\\\1')
-  safe_term = command_arg(safe_term)
+  safe_term = command_arg("^English\\t#{safe_term}\\t")
   
   # extract text definitions from TSV dump file
-  data = `grep '^English\\t#{safe_term}\\t' dumps/enwikt-defs-latest-en.tsv`
+  data = `grep -P #{safe_term} dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
@@ -194,6 +195,7 @@ def clean_defs(term, defs)
         display = display.gsub(/,(?:\s*,)+/, ',')
         display = display.gsub(/\)\(/, ') (')
         display = display.gsub(/\|/, ', ')
+        display = display.gsub(/&nbsp;/, ' ')
         display = display.gsub(/,\s*_\s*,/, ' ')
         display = display.gsub(/\s+/, ' ')
         display = display.gsub(/^\s+|\s+$/, '')
@@ -228,7 +230,7 @@ def clean_defs(term, defs)
           'index' => i,
           'wikitext' => definition,
           'display' => i.to_s + ". " + display,
-          'script' => "Definition " + i.to_s + ": " + script
+          'script' => "Definition " + i.to_s + ": [[slnc 500]] " + script
         })
         
       end
@@ -244,7 +246,7 @@ def clean_defs(term, defs)
       'term' => term,
       'kind' => kind,
       'display' => term + "\n(" + kind + ")",
-      'script' => "Part of speech: " + kind + ". " + i.to_s + suffix + "."
+      'script' => "Part of speech: " + kind + ". [[slnc 500]] " + i.to_s + suffix + "."
     })
     
     slides += kind_slides
@@ -294,6 +296,20 @@ def text_break(str, width=40)
     end
   }
   new_str
+end
+
+def file_name_gen(slide, suffix)
+  term = slide['term']
+  kind = slide['kind'] || nil
+  index = slide['index'] || nil
+  file_name = "terms/#{term}/#{term}"
+  if kind
+    file_name += "-#{kind}"
+    if index
+      file_name += "-#{index}"
+    end
+  end
+  file_name + suffix
 end
 
 def annotate(draw, canvas, width, height, x, y, text, color='#16313f', shadow=true)
@@ -360,14 +376,7 @@ def image_gen(slide)
     annotate(body_text, canvas, 0,0,40,110, body)
   end
   
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".#{IMAGE_KIND}"
+  file_name = file_name_gen(slide, ".#{IMAGE_KIND}")
   
   canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
@@ -382,15 +391,8 @@ def audio_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
   index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".WAV"
-  say = command_arg(';;' + slide['script'] + ';;')
+  file_name = file_name_gen(slide, ".WAV")
+  say = command_arg('[[slnc 1000]]' + slide['script'] + '[[slnc 1000]]')
   output = command_arg(file_name)
   `say -v Jill #{say} -o #{output}`
   slide['audio'] = file_name
@@ -400,14 +402,7 @@ def video_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
   index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name += ".avi"
+  file_name = file_name_gen(slide, ".avi")
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
@@ -416,7 +411,7 @@ def video_gen(slide)
   `ffmpeg -loop_input -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video}`
 
   # ffmpeg version >= 1.0
-  # `ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
+  #`ffmpeg -shortest -y -i #{image} -i #{audio} -acodec libmp3lame -vcodec mpeg4 #{video} -loop 1`
   slide['video'] = file_name
 end
 
@@ -436,7 +431,8 @@ end
 term = ARGV[0]
 
 defs = extract_defs(term)
-`mkdir -p terms/#{term}`
+path = command_arg("terms/#{term}")
+`mkdir -p #{path}`
 
 # create slides
 slides = []
@@ -467,6 +463,8 @@ end
 
 combine_video(term, slides)
 
+
+
 ################################################################################
 exit 1
 ################################################################################
@@ -485,8 +483,13 @@ slides.push({
   'script' => term + '.'
 })
 
-#https://en.wiktionary.org/w/api.php?action=query&prop=imageinfo&titles=File:en-us-{#term}.ogg&iiprop=url&format=json
-#{"query":{"pages":{"-1":{"ns":6,"title":"File:en-us-tear-verb.ogg","missing":"","imagerepository":"shared","imageinfo":[{"url":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/b\/b2\/En-us-tear-verb.ogg","descriptionurl":"https:\/\/commons.wikimedia.org\/wiki\/File:En-us-tear-verb.ogg"}]}}}}
+# Get the images (files) linked from an article:
+# https://en.wiktionary.org/w/api.php?action=query&prop=images&titles=#{term}&format=json
+# {"query":{"pages":{"5446":{"pageid":5446,"ns":0,"title":"tear","images":[{"ns":6,"title":"File:Crying-girl.jpg"},{"ns":6,"title":"File:Wikipedia-logo.png"},{"ns":6,"title":"File:en-us-tear-noun.ogg"},{"ns":6,"title":"File:en-us-tear-verb.ogg"}]}}}}
+
+# For a given image (file), find out its real URL
+# https://en.wiktionary.org/w/api.php?action=query&prop=imageinfo&titles=File:en-us-#{term}.ogg&iiprop=url&format=json
+# {"query":{"pages":{"-1":{"ns":6,"title":"File:en-us-tear-verb.ogg","missing":"","imagerepository":"shared","imageinfo":[{"url":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/b\/b2\/En-us-tear-verb.ogg","descriptionurl":"https:\/\/commons.wikimedia.org\/wiki\/File:En-us-tear-verb.ogg"}]}}}}
 
 slides.push({
   'term' => term,
