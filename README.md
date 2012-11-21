@@ -52,7 +52,16 @@ To see the slides in a more human-readable form, pipe this YAML data into the `p
 
     ruby scripts/make-slides.rb <term> | ruby scripts/print-slides.rb
 
-The `print-slides.rb` script augments the incoming YAML data, adding a new `image` field to each slide.
+To generate the images for the slides for a term, use the `make-images.rb`:
+
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb
+
+The `make-images.rb` script augments the incoming YAML data, adding a new `image` field to each slide.
 It pushes these updated slides as a YAML encoded sequence to standard output.
 The images the script generates will be placed in the `terms/<term>` directory.
+
+Similarly, to generate the audio for a set of slides, use the `make-audio.rb` script.
+
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb
+
 
