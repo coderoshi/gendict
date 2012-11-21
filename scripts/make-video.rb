@@ -48,7 +48,7 @@ for slide in slides
   video_gen(slide)
 end
 
-combine_video(slides[0]['term'], slides)
+combine_video(presentation['term'], slides)
 
 puts presentation.to_yaml
 
