@@ -68,3 +68,18 @@ Since the image and audio generation scripts both read and write the YAML repres
 
     ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb | ruby scripts/make-audio.rb
 
+The last script in the chain generates all the intermediate videos and then the final video.
+The `make-video.rb` script assumes that all the images and audio have already been generated.
+The script expects that the incoming YAML slides all have 'image' and 'audio' fields pointing to those files.
+
+The scripts can all be chained together:
+
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb | ruby scripts/make-audio.rb | ruby scripts/make-video.rb
+
+Or they can be separated out by piping the YAML to a separate file and feeding it back in later.
+
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb | ruby scripts/make-audio.rb > terms/<term>.yaml
+    cat terms/<term>.yaml | ruby scripts/make-video.rb
+
+The benefit of storing the intermediate YAML is that you can re-run any of the steps without re-running the whole chain.
+
