@@ -68,5 +68,3 @@ Since the image and audio generation scripts both read and write the YAML repres
 
     ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb | ruby scripts/make-audio.rb
 
-
-
