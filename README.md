@@ -60,8 +60,13 @@ The `make-images.rb` script augments the incoming YAML data, adding a new `image
 It pushes these updated slides as a YAML encoded sequence to standard output.
 The images the script generates will be placed in the `terms/<term>` directory.
 
-Similarly, to generate the audio for a set of slides, use the `make-audio.rb` script.
+Similarly, to generate just the audio for a set of slides, use the `make-audio.rb` script.
 
-    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-audio.rb
+
+Since the image and audio generation scripts both read and write the YAML representation of slides, they can be piped in sequence:
+
+    ruby scripts/make-slides.rb <term> | ruby scripts/make-images.rb | ruby scripts/make-audio.rb
+
 
 
