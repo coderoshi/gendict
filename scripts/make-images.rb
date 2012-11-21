@@ -27,26 +27,6 @@ BASE_FONT_SIZE = 82
 HEAD_FONT_SIZE = 116 #96
 BODY_FONT_SIZE = 78
 
-# Make a given argument safe for inserting into a command-line
-def command_arg(arg)
-  "'" + arg.gsub(/[\']/, "'\\\\''") + "'"
-end
-
-# Generate a filename for a given slide and suffix
-def file_name_gen(slide, suffix)
-  term = slide['term']
-  kind = slide['kind'] || nil
-  index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name + suffix
-end
-
 # break text up for image generation
 def text_break(str, width=38)
   new_str = ""
@@ -139,11 +119,12 @@ def image_gen(slide)
   
 end
 
-slides = YAML::load(STDIN.read)
+presentation = YAML::load(STDIN.read)
+slides = presentation['slides']
 
 for slide in slides
   image_gen(slide)
 end
 
-puts slides.to_yaml
+puts presentation.to_yaml
 

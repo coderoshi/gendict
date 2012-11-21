@@ -233,5 +233,10 @@ slides.push({
   'script' => term + '.'
 })
 
-puts slides.to_yaml
+presentation = {
+  'term' => term,
+  'slides' => slides
+}
+
+puts presentation.to_yaml
 

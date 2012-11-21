@@ -41,7 +41,8 @@ def combine_video(term, slides)
   `ffmpeg -y -i #{combined} -r 25 -qscale:v 1 #{final}`
 end
 
-slides = YAML::load(STDIN.read)
+presentation = YAML::load(STDIN.read)
+slides = presentation['slides']
 
 for slide in slides
   video_gen(slide)
@@ -49,5 +50,5 @@ end
 
 combine_video(slides[0]['term'], slides)
 
-puts slides.to_yaml
+puts presentation.to_yaml
 

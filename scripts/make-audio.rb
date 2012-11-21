@@ -25,11 +25,13 @@ def audio_gen(slide)
   slide['audio'] = file_name
 end
 
-slides = YAML::load(STDIN.read)
+presentation = YAML::load(STDIN.read)
+slides = presentation['slides']
+
 
 for slide in slides
   audio_gen(slide)
 end
 
-puts slides.to_yaml
+puts presentation.to_yaml
 
