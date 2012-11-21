@@ -4,6 +4,8 @@
 # are added back to slides and YAML pushed out to standard output
 # 
 # TODO:
+#  - Only create audio file if the file doesn't already exist
+#  - Add command line argument to force overwriting of files even if they exist
 #  - Make audio output location configurable
 #  - Move common functionality like file_name_gen() to separate Module
 # 
