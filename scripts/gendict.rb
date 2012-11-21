@@ -10,6 +10,7 @@ term = ARGV[0]
 
 term_arg = command_arg(term)
 yaml_file = command_arg("terms/#{term}/#{term}-slides.yaml")
+term_dir = command_arg("terms/#{term}")
 
 procedure = [
   "ruby scripts/make-slides.rb #{term_arg}",
@@ -19,4 +20,5 @@ procedure = [
 ].join(' | ') + " > #{yaml_file}"
 
 puts "Running procedure: #{procedure}"
+`mkdir #{term_dir}`
 `#{procedure}`
