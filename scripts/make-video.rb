@@ -14,32 +14,14 @@
 
 require 'yaml'
 
-# Make a given argument safe for inserting into a command-line
-def command_arg(arg)
-  "'" + arg.gsub(/[\']/, "'\\\\''") + "'"
-end
-
-# Generate a filename for a given slide and suffix
-def file_name_gen(slide, suffix)
-  term = slide['term']
-  kind = slide['kind'] || nil
-  index = slide['index'] || nil
-  file_name = "terms/#{term}/#{term}"
-  if kind
-    file_name += "-#{kind}"
-    if index
-      file_name += "-#{index}"
-    end
-  end
-  file_name + suffix
-end
+require './scripts/common.rb'
 
 # Generate video for a slide by combining the image and audio
 def video_gen(slide)
   term = slide['term']
   kind = slide['kind'] || nil
   index = slide['index'] || nil
-  file_name = file_name_gen(slide, ".avi")
+  file_name = file_name_gen(slide, ".mpg")
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
   video = command_arg(file_name)
@@ -49,15 +31,15 @@ end
 
 # Concatenate slide videos together into one video
 def combine_video(term, slides)
-  concat = []
+  args = []
   for slide in slides
-    concat.push slide['video']
+    args.push command_arg(slide['video'])
   end
-  concat = command_arg(concat.join('|'))
-  combined = command_arg("terms/#{term}/#{term}_combined.avi")
+  args = args.join(' ')
+  combined = command_arg("terms/#{term}/#{term}_combined.mpg")
   final = command_arg("terms/#{term}.avi")
-  `ffmpeg -y -i concat:#{concat} -c copy #{combined}`
-  `ffmpeg -y -i #{combined} -qscale:v 1 #{final}`
+  `cat #{args} > #{combined}`
+  `ffmpeg -y -i #{combined} -r 25 -qscale:v 1 #{final}`
 end
 
 slides = YAML::load(STDIN.read)

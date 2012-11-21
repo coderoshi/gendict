@@ -16,10 +16,7 @@
 
 require 'yaml'
 
-# Make a given argument safe for inserting into a command-line
-def command_arg(arg)
-  "'" + arg.gsub(/[\']/, "'\\\\''") + "'"
-end
+require './scripts/common.rb'
 
 # Extract terms from data dump
 def extract_defs(term)

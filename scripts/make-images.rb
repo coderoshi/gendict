@@ -14,6 +14,8 @@ require 'RMagick'
 require 'yaml'
 require 'titleize'
 
+require './scripts/common.rb'
+
 include Magick
 
 # configuration
