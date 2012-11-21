@@ -149,6 +149,7 @@ def clean_defs(term, defs)
         display = display.gsub(/<!--.*?-->/, '')
         
         # link syntax
+        display = display.gsub(/\(?\[\[w:[^\]\|]+|Wikipedia\]\]\)?/, '')
         display = display.gsub(/\[\[([^\]\|]+)\]\]/, '\1')
         display = display.gsub(/\[\[(?:[^\]\|]+\|)+([^\]]+)\]\]/, '\1')
         
