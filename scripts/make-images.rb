@@ -46,7 +46,7 @@ def file_name_gen(slide, suffix)
 end
 
 # break text up for image generation
-def text_break(str, width=40)
+def text_break(str, width=38)
   new_str = ""
   count=0
   str.split.each{|word|
