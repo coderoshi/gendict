@@ -9,7 +9,6 @@
 #  - Only create video if the file doesn't already exist
 #  - Add command line argument to force overwriting of files even if they exist
 #  - Make video output location configurable
-#  - Move common functionality like file_name_gen() to separate Module
 # 
 
 require 'yaml'

@@ -7,12 +7,10 @@
 #  - Only create image if the file doesn't already exist
 #  - Add command line argument to force overwriting of files even if they exist
 #  - Make image output location configurable
-#  - Move common functionality like file_name_gen() to separate Module
 # 
 
 require 'RMagick'
 require 'yaml'
-require 'titleize'
 
 require './scripts/common.rb'
 
