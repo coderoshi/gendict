@@ -12,6 +12,7 @@
 #  - Use command-line arg flag to allow output YAML to be pushed to a file
 #  - Grab raw wiktionary definitions from a random-access datastore rather than
 #    always grepping through the tsv file.
+#  - Speed up file search for matching raw definitions
 #  - Move common functionality like command_arg() to separate Module
 
 require 'yaml'
@@ -21,16 +22,21 @@ require './scripts/common.rb'
 # Extract terms from data dump
 def extract_defs(term)
   
-  # create shell-safe term
+  # create regex-safe term
   safe_term = term
   safe_term = safe_term.gsub(/([\-\[\]\{\}\(\)\*\+\?\.\,\\\^\$\|\#])/, '\\\\\\1')
-  safe_term = command_arg("^English\\t#{safe_term}\\t")
   
   # extract text definitions from TSV dump file
-  data = `grep -P #{safe_term} dumps/enwikt-defs-latest-en.tsv`
+  lines = []
+  File.open('dumps/enwikt-defs-latest-en.tsv', 'r') {|file|
+    file.each_line {|line|
+      if !line.match(/^English\t#{safe_term}\t/).nil?
+        lines.push(line.split(/\t/, 4).slice(2..-1))
+      end
+    }
+  }
 
   # extract definitions per part of speech
-  lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }
   defs = lines.inject(Hash.new{[]}) { |result, line|
     part = line[0].downcase
     result[part] = result[part].push(line[1].gsub(/^\s*#\s*/,''))
@@ -76,6 +82,7 @@ def clean_defs(term, defs)
         
         # template parameters
         display = display.gsub(/\|\s*(?:ambi|in|un)?(?:countable|formal|transitive)\s*(?=[\|\}])/, '')
+        display = display.gsub(/\|\s*(?:or|and)\s*(?=\||\}\})/, '')
         display = display.gsub(/(?<=[\{\|])(chiefly)\|([^\|\}]+)/, '\1 \2')
         
         # simple predictable templates
