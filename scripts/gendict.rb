@@ -16,8 +16,8 @@ procedure = [
   "ruby scripts/make-slides.rb #{term_arg}",
   "ruby scripts/make-images.rb",
   "ruby scripts/make-audio.rb",
-  "ruby scripts/make-video.rb"
-  "ruby scripts/upload-video.rb"
+  "ruby scripts/make-video.rb",
+  #"ruby scripts/upload-video.rb"
 ].join(' | ') + " > #{yaml_file}"
 
 puts "Running procedure: #{procedure}"
