@@ -20,12 +20,14 @@ def upload_video(client, presentation)
   slides = presentation['slides']
   term = presentation['term']
   definition = presentation['definition']
-  client.video_upload(
+  video = client.video_upload(
     File.open(presentation['video']),
-    :title => term,
+    :title => "#{term} - definition",
     :description => definition,
     :keywords => [term, 'definition'])
-
+  presentation['youtube_video'] = video
+  presentation['youtube_id'] = video.unique_id.to_s
+  video
 end
 
 client = YouTubeIt::Client.new(
