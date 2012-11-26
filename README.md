@@ -41,6 +41,16 @@ Use these commands to download the latest English Wiktionary definitons.
     curl -O http://dumps.wikimedia.org/enwiktionary/latest/enwiktionary-latest-all-titles-in-ns0.gz
     gunzip *.gz
 
+## Configure ENV variables
+
+gendict relies on three environment variables to configure YouTube uploading:
+
+* `YOUTUBE_UN` - your YouTube user's user name,
+* `YOUTUBE_PW` - your YouTube user's password,
+* `YOUTUBE_DK` - your YouTube user's developer key.
+
+You can look up your YouTube developer key in the [YouTube API Dashboard](http://code.google.com/apis/youtube/dashboard/).
+
 ## Generating slides, images, audio and videos
 
 To generate the slides for a term, use the `make-slides.rb` script:
