@@ -27,7 +27,7 @@ def extract_defs(term)
   safe_term = command_arg("^English\\t#{safe_term}\\t")
   
   # extract text definitions from TSV dump file
-  data = `grep -P #{safe_term} dumps/enwikt-defs-latest-en.tsv`
+  data = `grep #{safe_term} dumps/enwikt-defs-latest-en.tsv`
 
   # extract definitions per part of speech
   lines = data.split(/\r?\n/).map { |line| line.split(/\t/, 4).slice(2..-1) }

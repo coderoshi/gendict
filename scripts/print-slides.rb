@@ -6,7 +6,8 @@
 
 require 'yaml'
 
-slides = YAML::load(STDIN.read)
+presentation = YAML::load(STDIN.read)
+slides = presentation['slides']
 
 for slide in slides
   puts "\n************************************************************************************"
