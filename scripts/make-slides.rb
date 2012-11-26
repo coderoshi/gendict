@@ -226,7 +226,13 @@ slides.push({
   'script' => term + '.'
 })
 
-slides += clean_defs(term, defs)
+content_slides = clean_defs(term, defs)
+slides += content_slides
+
+# displayable definition
+definition = content_slides.map{|slide|
+  slide['display'].to_s.gsub(/\n/, ' ')
+}.compact.join("\n") + "\n\nhttp://en.wiktionary.org/wiki/#{term}"
 
 slides.push({
   'term' => term,
@@ -236,6 +242,7 @@ slides.push({
 
 presentation = {
   'term' => term,
+  'definition' => definition,
   'slides' => slides
 }
 
