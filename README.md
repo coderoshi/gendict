@@ -20,7 +20,7 @@ For any given `term`, the process goes something like this:
 3. Install ffmpeg:
  * `brew install ffmpeg`
 4. Install gems:
- * `gem install nokogiri`
+ * `gem install nokogiri youtube_it`
  * `C_INCLUDE_PATH=/usr/local/Cellar/imagemagick/6.7.7-6/include/ImageMagick gem install rmagick`
 5. `gem install bundler && bundler install`
 
