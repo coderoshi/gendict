@@ -1,9 +1,33 @@
 GEM
   remote: http://rubygems.org/
   specs:
+    builder (3.1.4)
+    faraday (0.8.4)
+      multipart-post (~> 1.1)
+    httpauth (0.2.0)
+    jwt (0.1.5)
+      multi_json (>= 1.0)
+    multi_json (1.3.7)
+    multipart-post (1.1.5)
     nokogiri (1.5.5)
+    oauth (0.4.7)
+    oauth2 (0.8.0)
+      faraday (~> 0.8)
+      httpauth (~> 0.1)
+      jwt (~> 0.1.4)
+      multi_json (~> 1.0)
+      rack (~> 1.2)
+    rack (1.4.1)
     rmagick (2.13.1)
+    simple_oauth (0.1.9)
     titleize (1.2.1)
+    youtube_it (2.1.8)
+      builder
+      faraday (~> 0.8)
+      nokogiri (~> 1.5.2)
+      oauth (~> 0.4.4)
+      oauth2 (~> 0.6)
+      simple_oauth (~> 0.1.5)
 
 PLATFORMS
   ruby
@@ -12,3 +36,4 @@ DEPENDENCIES
   nokogiri
   rmagick
   titleize
+  youtube_it

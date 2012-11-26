@@ -18,8 +18,12 @@ require './scripts/common.rb'
 # Generate video for a slide by combining the image and audio
 def video_gen(slide)
   term = slide['term']
-  kind = slide['kind'] || nil
-  index = slide['index'] || nil
+  kind = slide['kind']
+  index = slide['index']
+  audio = slide['audio']
+  image = slide['image']
+  raise "audio is required fof #{term}" unless audio
+  raise "image is required fof #{term}" unless image
   file_name = file_name_gen(slide, ".mpg")
   audio = command_arg(slide['audio'])
   image = command_arg(slide['image'])
