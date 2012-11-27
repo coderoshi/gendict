@@ -27,7 +27,11 @@ end
 
 presentation = YAML::load(STDIN.read)
 slides = presentation['slides']
+term = presentation['term']
 
+# create build path
+build_path = command_arg("#{BUILD_DIR}/#{term}")
+`mkdir -p #{build_path}`
 
 for slide in slides
   audio_gen(slide)

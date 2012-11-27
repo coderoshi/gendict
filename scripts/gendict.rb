@@ -9,17 +9,17 @@ require './scripts/common.rb'
 term = ARGV[0]
 
 term_arg = command_arg(term)
-yaml_file = command_arg("terms/#{term}/#{term}-slides.yaml")
-term_dir = command_arg("terms/#{term}")
+dist_dir = command_arg("#{DIST_DIR}/#{term}")
+yaml_file = command_arg("#{DIST_DIR}/#{term}/#{term}.yaml")
 
 procedure = [
   "ruby scripts/make-slides.rb #{term_arg}",
   "ruby scripts/make-images.rb",
   "ruby scripts/make-audio.rb",
-  "ruby scripts/make-video.rb"
-  "ruby scripts/upload-video.rb"
+  "ruby scripts/make-video.rb",
+  "ruby scripts/upload-video.rb",
 ].join(' | ') + " > #{yaml_file}"
 
 puts "Running procedure: #{procedure}"
-`mkdir #{term_dir}`
+`mkdir -p #{dist_dir}`
 `#{procedure}`

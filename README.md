@@ -20,7 +20,7 @@ For any given `term`, the process goes something like this:
 3. Install ffmpeg:
  * `brew install ffmpeg`
 4. Install gems:
- * `gem install nokogiri`
+ * `gem install nokogiri youtube_it`
  * `C_INCLUDE_PATH=/usr/local/Cellar/imagemagick/6.7.7-6/include/ImageMagick gem install rmagick`
 5. `gem install bundler && bundler install`
 
@@ -40,6 +40,16 @@ Use these commands to download the latest English Wiktionary definitons.
     curl -O http://toolserver.org/~enwikt/definitions/enwikt-defs-latest-en.tsv.gz
     curl -O http://dumps.wikimedia.org/enwiktionary/latest/enwiktionary-latest-all-titles-in-ns0.gz
     gunzip *.gz
+
+## Configure ENV variables
+
+gendict relies on three environment variables to configure YouTube uploading:
+
+* `YOUTUBE_UN` - your YouTube user's user name,
+* `YOUTUBE_PW` - your YouTube user's password,
+* `YOUTUBE_DK` - your YouTube user's developer key.
+
+You can look up your YouTube developer key in the [YouTube API Dashboard](http://code.google.com/apis/youtube/dashboard/).
 
 ## Generating slides, images, audio and videos
 

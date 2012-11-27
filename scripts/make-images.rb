@@ -110,10 +110,6 @@ def image_gen(slide)
   
   file_name = file_name_gen(slide, ".#{IMAGE_KIND}")
   
-  # create path
-  path = command_arg("terms/#{term}")
-  `mkdir -p #{path}`
-  
   canvas.append(true).write("#{file_name}")
   slide['image'] = file_name
   
@@ -121,6 +117,11 @@ end
 
 presentation = YAML::load(STDIN.read)
 slides = presentation['slides']
+term = presentation['term']
+
+# create build path
+build_path = command_arg("#{BUILD_DIR}/#{term}")
+`mkdir -p #{build_path}`
 
 for slide in slides
   image_gen(slide)

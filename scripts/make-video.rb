@@ -33,26 +33,36 @@ def video_gen(slide)
 end
 
 # Concatenate slide videos together into one video
-def combine_video(term, slides)
+def combine_video(presentation)
+  term = presentation['term']
   args = []
-  for slide in slides
+  for slide in presentation['slides']
     args.push command_arg(slide['video'])
   end
   args = args.join(' ')
-  combined = command_arg("terms/#{term}/#{term}_combined.mpg")
-  final = command_arg("terms/#{term}.avi")
-  `cat #{args} > #{combined}`
-  `ffmpeg -y -i #{combined} -r 25 -qscale:v 1 #{final}`
+  combined_arg = command_arg("#{BUILD_DIR}/#{term}/#{term}-combined.mpg")
+  final = "#{DIST_DIR}/#{term}/#{term}.avi"
+  final_arg = command_arg(final)
+  `cat #{args} > #{combined_arg}`
+  `ffmpeg -y -i #{combined_arg} -r 25 -qscale:v 1 #{final_arg}`
+  presentation['video'] = final
 end
 
 presentation = YAML::load(STDIN.read)
 slides = presentation['slides']
+term = presentation['term']
+
+# create build and dist paths
+build_path = command_arg("#{BUILD_DIR}/#{term}")
+`mkdir -p #{build_path}`
+dist_path = command_arg("#{DIST_DIR}/#{term}")
+`mkdir -p #{dist_path}`
 
 for slide in slides
   video_gen(slide)
 end
 
-combine_video(presentation['term'], slides)
+combine_video(presentation)
 
 puts presentation.to_yaml
 
