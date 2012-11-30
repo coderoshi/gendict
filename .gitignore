@@ -2,3 +2,4 @@ terms/*
 dumps/*
 dist/*
 build/*
+*-creds.sh
