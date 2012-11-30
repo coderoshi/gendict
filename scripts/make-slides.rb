@@ -8,6 +8,11 @@
 # which is expected to live in the dumps/ directory.
 # 
 # TODO:
+#  - If the word being generated doesn't appear,
+#    - check for alternative capitalizations
+#    - if there are still none, fail gracefully (do not generate video)
+#  - Handle words for wich multiple capitalizations exist, or relegate this
+#    check to an upstream script
 #  - Use command-line arg flag to allow different dumps/*.tsv file path
 #  - Use command-line arg flag to allow output YAML to be pushed to a file
 #  - Grab raw wiktionary definitions from a random-access datastore rather than
