@@ -12,6 +12,15 @@
 #    to the presentation object.
 #  - gracefully handle missing configuration env variables
 # 
+# NOTES:
+#  - having a helluva time figuring out how to query the YouTube client for 
+#    videos matching an exact video title.  feel like this is getting close:
+#    client.videos_by(
+#      :user => 'viddictionary',
+#      :per_page => 1,
+#      :fields => {
+#        :entry => 'title="work - definition"'
+#      })
 
 require 'yaml'
 require 'youtube_it'
