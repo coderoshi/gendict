@@ -4,6 +4,9 @@
 # already been generated and uploads it to YouTube.
 # 
 # TODO:
+#  - check whether a video with that same title has already been uploaded, and
+#    by default don't overwrite
+#  - add command line switch which allows overwriting existing videos
 #  - record the YouTube ID from the upload and add it to the presentation object
 #  - handle errors that may occur during the upload and add relevent information
 #    to the presentation object.
