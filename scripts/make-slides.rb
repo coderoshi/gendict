@@ -83,7 +83,7 @@ def clean_defs(term, defs)
         
         # numbered and named template arguments
         display = display.gsub(/\|\s*\d+\s*=\s*/, '|')
-        display = display.gsub(/\|\s*from\s*=\s*[^\|\}]+/, '')
+        display = display.gsub(/\|\s*(?:dot|from)\s*=[^\|\}]*/, '')
         
         # template parameters
         display = display.gsub(/\|\s*(?:ambi|in|un)?(?:countable|formal|transitive)\s*(?=[\|\}])/, '')
