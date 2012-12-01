@@ -232,10 +232,11 @@ defs = extract_defs(term)
 
 # create slides
 slides = []
+script = defs.keys.include?('abbreviation') ? term.split('').join('.') : term
 slides.push({
   'term' => term,
   'display' => term,
-  'script' => term + '.'
+  'script' => script + '.'
 })
 
 content_slides = clean_defs(term, defs)
@@ -249,7 +250,7 @@ definition = content_slides.map{|slide|
 slides.push({
   'term' => term,
   'display' => term,
-  'script' => term + '.'
+  'script' => script + '.'
 })
 
 presentation = {
