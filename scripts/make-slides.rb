@@ -43,7 +43,7 @@ def extract_defs(term)
 
   # extract definitions per part of speech
   defs = lines.inject(Hash.new{[]}) { |result, line|
-    part = line[0].downcase
+    part = line[0].downcase.gsub(/[\{\}]/, '')
     result[part] = result[part].push(line[1].gsub(/^\s*#\s*/,''))
     result
   }
